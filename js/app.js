@@ -2785,15 +2785,26 @@ class AppController {
       submitBtn.innerHTML = `<span>⏳</span> <span>${this.lang === "ar" ? "جاري الإرسال للراسمة..." : "Sending to Plotter..."}</span>`;
     }
 
-    fetch("/api/workshop/submit", {
+    const submitToLocal = () => fetch("/api/workshop/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
-    })
-      .then(res => {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.json();
-      })
+    }).then(res => {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    });
+
+    const submitToCloud = () => fetch("https://ntfy.sh/doojn_workshop_queue_7349", {
+      method: "POST",
+      headers: { "Title": `Plotter Job from ${name}`, "Tags": "art,robot" },
+      body: JSON.stringify(payload)
+    }).then(() => ({ queuePosition: 1, cloudRelayed: true }));
+
+    const submissionAction = window.location.hostname.includes("github.io")
+      ? submitToCloud()
+      : submitToLocal().catch(() => submitToCloud());
+
+    submissionAction
       .then(data => {
         this.showSubmitSuccess(data.queuePosition || 1, name, payload, data);
       })
@@ -2988,15 +2999,22 @@ class AppController {
       localStorage.setItem("plotter_participant_name", name);
     }
 
-    const payload = { name, message, type };
+    const payload = { name, message, type, timestamp: new Date().toISOString() };
 
-    fetch("/api/workshop/feedback", {
+    const fbLocal = () => fetch("/api/workshop/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
-    })
-      .then(res => res.json())
-      .then(() => {
+    });
+
+    const fbCloud = () => fetch("https://ntfy.sh/doojn_workshop_feedback_7349", {
+      method: "POST",
+      headers: { "Title": `Feedback from ${name}`, "Tags": "speech_balloon" },
+      body: JSON.stringify(payload)
+    });
+
+    (window.location.hostname.includes("github.io") ? fbCloud() : fbLocal().catch(() => fbCloud()))
+      .finally(() => {
         const formBody = document.getElementById("feedbackFormBody");
         const successBody = document.getElementById("feedbackSuccessBody");
         if (formBody) formBody.style.display = "none";
@@ -3004,21 +3022,26 @@ class AppController {
         if (this.isOperatorMode) {
           this.fetchFeedback(true);
         }
-      })
-      .catch(err => {
-        console.error("Feedback submit error:", err);
-        const formBody = document.getElementById("feedbackFormBody");
-        const successBody = document.getElementById("feedbackSuccessBody");
-        if (formBody) formBody.style.display = "none";
-        if (successBody) successBody.style.display = "block";
       });
   }
 
   fetchFeedback(silent = false) {
-    fetch("/api/workshop/feedback")
-      .then(res => res.json())
-      .then(data => {
-        this.feedbackList = data.feedback || [];
+    const fetchLocal = () => fetch("/api/workshop/feedback").then(res => res.json()).then(data => data.feedback || []);
+    const fetchCloud = () => fetch("https://ntfy.sh/doojn_workshop_feedback_7349/json?poll=1")
+      .then(res => res.text())
+      .then(text => {
+        if (!text) return [];
+        return text.trim().split('\n').map(l => {
+          try {
+            const item = JSON.parse(l);
+            return item.message ? JSON.parse(item.message) : null;
+          } catch(e){ return null; }
+        }).filter(Boolean);
+      });
+
+    (window.location.hostname.includes("github.io") ? fetchCloud() : fetchLocal().catch(() => fetchCloud()))
+      .then(list => {
+        this.feedbackList = list || [];
         this.renderFeedbackList();
       })
       .catch(() => {
@@ -3099,8 +3122,20 @@ class AppController {
   }
 
   fetchWorkshopQueue(silent = false) {
-    fetch("/api/workshop/queue")
-      .then(res => res.json())
+    const fetchLocal = () => fetch("/api/workshop/queue").then(res => res.json());
+    const fetchCloud = () => fetch("https://ntfy.sh/doojn_workshop_queue_7349/json?poll=1")
+      .then(res => res.text())
+      .then(text => {
+        if (!text) return [];
+        return text.trim().split('\n').map(l => {
+          try {
+            const item = JSON.parse(l);
+            return item.message ? JSON.parse(item.message) : null;
+          } catch(e){ return null; }
+        }).filter(Boolean);
+      });
+
+    (window.location.hostname.includes("github.io") ? fetchCloud() : fetchLocal().catch(() => fetchCloud()))
       .then(jobs => {
         this.workshopJobs = jobs || [];
         this.renderQueueList();
