@@ -789,100 +789,27 @@
     return res;
   }
   function generateQRCodeSVG(text, sizePx = 240) {
-    const size = 29;
-    const matrix = Array.from({ length: size }, () => new Int8Array(size).fill(-1));
-    function putFinder(r, c) {
-      for (let y = -1; y <= 7; y++) {
-        for (let x = -1; x <= 7; x++) {
-          const py = r + y, px = c + x;
-          if (py >= 0 && py < size && px >= 0 && px < size) {
-            const isEdge = (y === -1 || y === 7 || x === -1 || x === 7);
-            const isOuter = (y === 0 || y === 6 || x === 0 || x === 6);
-            const isCenter = (y >= 2 && y <= 4 && x >= 2 && x <= 4);
-            matrix[py][px] = (isEdge || !isOuter || isCenter) ? (isEdge ? 0 : 1) : 0;
+    try {
+      const lib = (typeof QRCodeLib !== 'undefined') ? QRCodeLib : ((typeof window !== 'undefined' && window.QRCodeLib) ? window.QRCodeLib : null);
+      if (lib && lib.create) {
+        const qr = lib.create(text, { errorCorrectionLevel: 'M' });
+        const size = qr.modules.size;
+        const margin = 3;
+        const total = size + margin * 2;
+        let d = '';
+        for (let r = 0; r < size; r++) {
+          for (let c = 0; c < size; c++) {
+            if (qr.modules.get(r, c)) {
+              d += `M${c + margin},${r + margin}h1v1h-1z `;
+            }
           }
         }
+        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${total}" width="${sizePx}" height="${sizePx}" shape-rendering="crispEdges"><rect width="${total}" height="${total}" fill="#ffffff"/><path d="${d.trim()}" fill="#000000"/></svg>`;
       }
+    } catch (e) {
+      console.error("QR Code generation error:", e);
     }
-    putFinder(0, 0);
-    putFinder(0, size - 7);
-    putFinder(size - 7, 0);
-    for (let y = -2; y <= 2; y++) {
-      for (let x = -2; x <= 2; x++) {
-        const isEdge = Math.abs(y) === 2 || Math.abs(x) === 2;
-        const isCenter = y === 0 && x === 0;
-        matrix[22 + y][22 + x] = (isEdge || isCenter) ? 1 : 0;
-      }
-    }
-    for (let i = 8; i < size - 8; i++) {
-      if (matrix[6][i] === -1) matrix[6][i] = (i % 2 === 0) ? 1 : 0;
-      if (matrix[i][6] === -1) matrix[i][6] = (i % 2 === 0) ? 1 : 0;
-    }
-    matrix[size - 8][8] = 1;
-    for (let i = 0; i < 9; i++) {
-      if (matrix[8][i] === -1) matrix[8][i] = 0;
-      if (matrix[i][8] === -1) matrix[i][8] = 0;
-    }
-    for (let i = size - 8; i < size; i++) {
-      if (matrix[8][i] === -1) matrix[8][i] = 0;
-      if (matrix[i][8] === -1) matrix[i][8] = 0;
-    }
-    const encoder = typeof TextEncoder !== "undefined" ? new TextEncoder() : { encode: str => Buffer.from(str) };
-    const bytes = encoder.encode(text);
-    let bitStr = "0100" + bytes.length.toString(2).padStart(8, '0');
-    for (let i = 0; i < bytes.length; i++) bitStr += bytes[i].toString(2).padStart(8, '0');
-    bitStr += "0000";
-    while (bitStr.length % 8 !== 0) bitStr += "0";
-    const dataBytes = [];
-    for (let i = 0; i < bitStr.length; i += 8) dataBytes.push(parseInt(bitStr.substr(i, 8), 2));
-    const padPatterns = [0xEC, 0x11];
-    let padIdx = 0;
-    while (dataBytes.length < 55) dataBytes.push(padPatterns[padIdx++ % 2]);
-    const ecBytes = rsComputeC(new Uint8Array(dataBytes), 15);
-    const totalCodewords = [...dataBytes, ...ecBytes];
-    let streamBits = "";
-    for (let b of totalCodewords) streamBits += b.toString(2).padStart(8, '0');
-    while (streamBits.length < 70 * 8) streamBits += "0";
-    let bitIdx = 0;
-    let upwards = true;
-    for (let c = size - 1; c > 0; c -= 2) {
-      if (c === 6) c--;
-      const rows = [];
-      if (upwards) { for (let r = size - 1; r >= 0; r--) rows.push(r); }
-      else { for (let r = 0; r < size; r++) rows.push(r); }
-      for (let r of rows) {
-        for (let colOffset of [0, 1]) {
-          const xPos = c - colOffset;
-          if (matrix[r][xPos] === -1) {
-            const bitVal = bitIdx < streamBits.length ? streamBits[bitIdx++] === '1' : 0;
-            const mask = ((r + xPos) % 2 === 0);
-            matrix[r][xPos] = (bitVal ^ mask) ? 1 : 0;
-          }
-        }
-      }
-      upwards = !upwards;
-    }
-    const fmtBits = "111011111000100";
-    const tlCoords = [
-      [8,0], [8,1], [8,2], [8,3], [8,4], [8,5], [8,7], [8,8],
-      [7,8], [5,8], [4,8], [3,8], [2,8], [1,8], [0,8]
-    ];
-    for (let i = 0; i < 15; i++) matrix[tlCoords[i][0]][tlCoords[i][1]] = fmtBits[i] === '1' ? 1 : 0;
-    for (let i = 0; i < 7; i++) matrix[size - 1 - i][8] = fmtBits[i] === '1' ? 1 : 0;
-    for (let i = 0; i < 8; i++) matrix[8][size - 8 + i] = fmtBits[7 + i] === '1' ? 1 : 0;
-
-    const pad = 2;
-    const total = size + pad * 2;
-    let pathD = "";
-    for (let r = 0; r < size; r++) {
-      for (let c = 0; c < size; c++) {
-        if (matrix[r][c] === 1) pathD += `M${c + pad},${r + pad}h1v1h-1z `;
-      }
-    }
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${total}" width="${sizePx}" height="${sizePx}">
-      <rect width="${total}" height="${total}" fill="#ffffff" rx="10"/>
-      <path d="${pathD}" fill="#0f172a"/>
-    </svg>`;
+    return '';
   }
 
   /**

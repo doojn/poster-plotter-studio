@@ -123,6 +123,7 @@ const I18N = {
     specTime: "Est. Draw Time:",
     specLifts: "Pen Lifts:",
     specCalibrated: "1:1 Physical Scale · Bottom-Left Origin · OpenBuilds Calibrated",
+    btnConfirmSubmit: "Submit Poster to Queue",
     successTitle: "Poster Sent to the Workshop Plotter!",
     successGreeting: "Thank you,",
     successDesc: "Your poster has been added to the drawing queue. The instructor will call your name when your paper is placed on the machine!",
@@ -2789,11 +2790,15 @@ class AppController {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
       .then(data => {
         this.showSubmitSuccess(data.queuePosition || 1, name, payload, data);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.warn("Direct submit failed, using offline fallback:", err);
         // Offline / Standalone mode: save locally and download package
         const localQueue = JSON.parse(localStorage.getItem("plotter_local_queue") || "[]");
         const jobId = `JOB-${String(localQueue.length + 1).padStart(2, '0')}`;
@@ -2808,7 +2813,8 @@ class AppController {
       .finally(() => {
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.innerHTML = `<span>🚀</span> <span data-i18n="btnConfirmSubmit">${I18N[this.lang].btnConfirmSubmit}</span>`;
+          const confirmLabel = I18N[this.lang]?.btnConfirmSubmit || (this.lang === "ar" ? "إرسال الملصق للراسمة" : "Submit Poster to Queue");
+          submitBtn.innerHTML = `<span>🚀</span> <span data-i18n="btnConfirmSubmit">${confirmLabel}</span>`;
         }
       });
   }
@@ -2824,6 +2830,56 @@ class AppController {
     if (nameDisplay) nameDisplay.textContent = name || (this.lang === "ar" ? "المشارك" : "Participant");
     if (posBadge) {
       posBadge.textContent = this.lang === "ar" ? `الترتيب في الطابور #${pos}` : `Queue Position #${pos}`;
+    }
+
+    // Handle offline / GitHub Pages mode: provide download button for AirDrop to host
+    let offlineNotice = document.getElementById("submitOfflineNotice");
+    if (!data) {
+      if (!offlineNotice) {
+        offlineNotice = document.createElement("div");
+        offlineNotice.id = "submitOfflineNotice";
+        offlineNotice.style.margin = "12px 0";
+        offlineNotice.style.padding = "12px";
+        offlineNotice.style.background = "rgba(245, 158, 11, 0.15)";
+        offlineNotice.style.border = "1px solid #f59e0b";
+        offlineNotice.style.borderRadius = "10px";
+        offlineNotice.style.textAlign = "center";
+        const doneBtn = document.getElementById("btnDoneSubmitModal");
+        if (doneBtn && doneBtn.parentNode) {
+          doneBtn.parentNode.insertBefore(offlineNotice, doneBtn);
+        } else {
+          successBody.appendChild(offlineNotice);
+        }
+      }
+      offlineNotice.style.display = "block";
+      const jsonStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+      const safeName = (name || "participant").replace(/[^a-zA-Z0-9_\u0600-\u06FF]/g, "_");
+      const safeFileName = `${safeName}_poster_job.json`;
+      offlineNotice.innerHTML = `
+        <div style="font-size:13px; font-weight:700; color:#fbbf24; margin-bottom:6px;">
+          ${this.lang === "ar" ? "📱 أنت على النسخة السحابية (GitHub Pages)" : "📱 You are on the Online Web Version (GitHub Pages)"}
+        </div>
+        <p style="font-size:12px; color:#e2e8f0; margin:0 0 10px 0; line-height:1.5;">
+          ${this.lang === "ar"
+            ? "لإرسال ملصقك فوراً للراسمة عبر الواي فاي: افتح <strong>http://192.168.1.9:8080</strong><br>أو اضغط الزر بالأسفل وحمّل الملف وأرسله للمدربة عبر AirDrop:"
+            : "To send directly via Wi-Fi: open <strong>http://192.168.1.9:8080</strong><br>Or tap below to download your poster & AirDrop to Njood:"}
+        </p>
+        <a href="${jsonStr}" download="${safeFileName}" style="display:inline-flex; align-items:center; gap:6px; background:#0284c7; color:#fff; text-decoration:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:13px;">
+          📥 Download Job File / AirDrop to Njood
+        </a>
+      `;
+
+      // Auto download
+      try {
+        const a = document.createElement("a");
+        a.href = jsonStr;
+        a.download = safeFileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } catch (e) {}
+    } else {
+      if (offlineNotice) offlineNotice.style.display = "none";
     }
   }
 
