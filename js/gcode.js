@@ -206,7 +206,7 @@
     gcode.push("; Adjust and tape paper while carriage traces perimeter. Returns home before plotting.");
     gcode.push("; ==============================================================================");
     gcode.push(safeClearance + " ; Ensure pen is safely raised");
-    gcode.push("G0 F4000 ; Alignment trace feedrate");
+    gcode.push(`G0 F${feedTravel} ; Alignment trace feedrate`);
     // Pass 1
     gcode.push(`G0 X${bMinX} Y${bMinY}`);
     gcode.push(`G0 X${bMaxX} Y${bMinY}`);
