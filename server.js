@@ -141,8 +141,141 @@ function getLocalIP() {
 
 
 
-// QR code generation handled via standard 'qrcode' package
+// Helper function to save incoming job from local POST or cloud relay
+function saveIncomingJob(payload) {
+  const jobId = payload.id || `JOB-${String(jobCounter++).padStart(2, '0')}`;
+  const participant = payload.participantName || "Anonymous";
+  const hash = payload.hash || generatePosterHash(participant, jobId);
+  
+  // Check if already in queue
+  const existing = jobQueue.find(j => j.hash === hash || (j.participantName === participant && j.submittedAt === payload.submittedAt));
+  if (existing) return { job: existing, queuePosition: jobQueue.filter(j => j.status === 'queued').length };
 
+  const paper = payload.paperSize || "A4";
+  const obfName = obfuscateName(participant);
+
+  const job = {
+    id: jobId,
+    hash: hash,
+    participantName: participant,
+    obfuscatedName: obfName,
+    submittedAt: payload.submittedAt || new Date().toISOString(),
+    status: payload.status || "queued",
+    paperSize: paper,
+    paperOrientation: payload.paperOrientation || "landscape",
+    paperWidthMm: payload.paperWidthMm || 203,
+    paperHeightMm: payload.paperHeightMm || 152,
+    markerType: payload.markerType || "chunky",
+    penCount: payload.penCount || 1,
+    penNames: payload.penNames || ["Primary Pen"],
+    penColors: payload.penColors || ["#111111"],
+    timeFormatted: payload.timeFormatted || "4m 00s",
+    penLifts: payload.penLifts ?? 0,
+    drawDistMeters: payload.drawDistMeters || "0m",
+    gcodeFilename: `${hash}_OpenBuilds.gcode`,
+    svgFilename: `${hash}_Calibrated.svg`,
+    splitFiles: [],
+    paths: payload.paths || null
+  };
+
+  const safePerson = getSafePersonName(participant);
+  const personDir = path.join(JOBS_DIR, safePerson);
+  if (!fs.existsSync(personDir)) fs.mkdirSync(personDir, { recursive: true });
+
+  job.personFolder = safePerson;
+  job.personDir = personDir;
+
+  // 1. Split files
+  if (Array.isArray(payload.splitFiles)) {
+    job.splitFiles = payload.splitFiles.map((split, i) => {
+      const splitFn = split.filename || `Pen${i + 1}_${safePerson}.gcode`;
+      if (split.gcode) {
+        fs.writeFileSync(path.join(personDir, splitFn), split.gcode, 'utf8');
+        fs.writeFileSync(path.join(JOBS_DIR, splitFn), split.gcode, 'utf8');
+        fs.writeFileSync(path.join(JOBS_DIR, `${hash}_Pen${i + 1}.gcode`), split.gcode, 'utf8');
+      }
+      return {
+        name: split.name || `Pen ${i + 1}`,
+        colorName: split.colorName || split.name || `Pen ${i + 1}`,
+        filename: splitFn,
+        relPath: `${safePerson}/${splitFn}`
+      };
+    });
+  }
+
+  // 1b. Wide split files
+  if (Array.isArray(payload.wideSplitFiles)) {
+    job.wideSplitFiles = payload.wideSplitFiles.map((wsplit, i) => {
+      const wideFn = `Wide_${wsplit.filename || `Pen${i + 1}_${safePerson}.gcode`}`;
+      if (wsplit.gcode) {
+        fs.writeFileSync(path.join(personDir, wideFn), wsplit.gcode, 'utf8');
+        fs.writeFileSync(path.join(JOBS_DIR, wideFn), wsplit.gcode, 'utf8');
+      }
+      return {
+        name: wsplit.name || `Pen ${i + 1}`,
+        colorName: wsplit.colorName || wsplit.name || `Pen ${i + 1}`,
+        filename: wideFn,
+        relPath: `${safePerson}/${wideFn}`
+      };
+    });
+  }
+
+  // 2. Combined G-code
+  const combinedFn = `All_Colors_${safePerson}.gcode`;
+  if (payload.gcode) {
+    fs.writeFileSync(path.join(personDir, combinedFn), payload.gcode, 'utf8');
+    fs.writeFileSync(path.join(JOBS_DIR, combinedFn), payload.gcode, 'utf8');
+    fs.writeFileSync(path.join(JOBS_DIR, `${hash}_OpenBuilds.gcode`), payload.gcode, 'utf8');
+  }
+  job.gcodeFilename = combinedFn;
+
+  // 2b. Wide combined G-code
+  const wideCombinedFn = `Wide_All_Colors_${safePerson}.gcode`;
+  if (payload.wideGcode) {
+    fs.writeFileSync(path.join(personDir, wideCombinedFn), payload.wideGcode, 'utf8');
+    fs.writeFileSync(path.join(JOBS_DIR, wideCombinedFn), payload.wideGcode, 'utf8');
+  }
+  job.wideGcodeFilename = wideCombinedFn;
+
+  // 3. Calibrated SVG
+  const svgFn = `Calibrated_${safePerson}.svg`;
+  if (payload.svg) {
+    fs.writeFileSync(path.join(personDir, svgFn), payload.svg, 'utf8');
+    fs.writeFileSync(path.join(JOBS_DIR, svgFn), payload.svg, 'utf8');
+    fs.writeFileSync(path.join(JOBS_DIR, `${hash}_Calibrated.svg`), payload.svg, 'utf8');
+  }
+  job.svgFilename = svgFn;
+
+  // 3b. Wide Calibrated SVG
+  const wideSvgFn = `Wide_Calibrated_${safePerson}.svg`;
+  if (payload.wideSvg) {
+    fs.writeFileSync(path.join(personDir, wideSvgFn), payload.wideSvg, 'utf8');
+    fs.writeFileSync(path.join(JOBS_DIR, wideSvgFn), payload.wideSvg, 'utf8');
+  }
+  job.wideSvgFilename = wideSvgFn;
+
+  // 4. Save metadata json
+  fs.writeFileSync(path.join(personDir, `job_${hash}.json`), JSON.stringify(job, null, 2), 'utf8');
+  fs.writeFileSync(path.join(JOBS_DIR, `${hash}.json`), JSON.stringify(job, null, 2), 'utf8');
+
+  jobQueue.push(job);
+
+  const localIp = getLocalIP();
+  const nfcUrl = `http://${localIp}:${PORT}/p/${hash}`;
+  const viewerUrl = `http://${localIp}:${PORT}/viewer.html?id=${hash}`;
+
+  console.log(`\n📥 NEW JOB: [${job.id}] [Hash: ${hash}] from ${participant} (${paper}, ${job.penCount} pens, est ${job.timeFormatted})`);
+  console.log(`   🏷️  NFC Souvenir URL: ${nfcUrl}`);
+
+  return {
+    job,
+    jobId: job.id,
+    hash,
+    nfcUrl,
+    viewerUrl,
+    queuePosition: jobQueue.filter(j => j.status === 'queued').length
+  };
+}
 
 // MIME Types
 const MIME_TYPES = {
@@ -287,141 +420,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Helper function to save incoming job from local POST or cloud relay
-  function saveIncomingJob(payload) {
-    const jobId = payload.id || `JOB-${String(jobCounter++).padStart(2, '0')}`;
-    const participant = payload.participantName || "Anonymous";
-    const hash = payload.hash || generatePosterHash(participant, jobId);
-    
-    // Check if already in queue
-    const existing = jobQueue.find(j => j.hash === hash || (j.participantName === participant && j.submittedAt === payload.submittedAt));
-    if (existing) return { job: existing, queuePosition: jobQueue.filter(j => j.status === 'queued').length };
 
-    const paper = payload.paperSize || "A4";
-    const obfName = obfuscateName(participant);
-
-    const job = {
-      id: jobId,
-      hash: hash,
-      participantName: participant,
-      obfuscatedName: obfName,
-      submittedAt: payload.submittedAt || new Date().toISOString(),
-      status: payload.status || "queued",
-      paperSize: paper,
-      paperOrientation: payload.paperOrientation || "landscape",
-      paperWidthMm: payload.paperWidthMm || 203,
-      paperHeightMm: payload.paperHeightMm || 152,
-      markerType: payload.markerType || "chunky",
-      penCount: payload.penCount || 1,
-      penNames: payload.penNames || ["Primary Pen"],
-      penColors: payload.penColors || ["#111111"],
-      timeFormatted: payload.timeFormatted || "4m 00s",
-      penLifts: payload.penLifts ?? 0,
-      drawDistMeters: payload.drawDistMeters || "0m",
-      gcodeFilename: `${hash}_OpenBuilds.gcode`,
-      svgFilename: `${hash}_Calibrated.svg`,
-      splitFiles: [],
-      paths: payload.paths || null
-    };
-
-    const safePerson = getSafePersonName(participant);
-    const personDir = path.join(JOBS_DIR, safePerson);
-    if (!fs.existsSync(personDir)) fs.mkdirSync(personDir, { recursive: true });
-
-    job.personFolder = safePerson;
-    job.personDir = personDir;
-
-    // 1. Split files
-    if (Array.isArray(payload.splitFiles)) {
-      job.splitFiles = payload.splitFiles.map((split, i) => {
-        const splitFn = split.filename || `Pen${i + 1}_${safePerson}.gcode`;
-        if (split.gcode) {
-          fs.writeFileSync(path.join(personDir, splitFn), split.gcode, 'utf8');
-          fs.writeFileSync(path.join(JOBS_DIR, splitFn), split.gcode, 'utf8');
-          fs.writeFileSync(path.join(JOBS_DIR, `${hash}_Pen${i + 1}.gcode`), split.gcode, 'utf8');
-        }
-        return {
-          name: split.name || `Pen ${i + 1}`,
-          colorName: split.colorName || split.name || `Pen ${i + 1}`,
-          filename: splitFn,
-          relPath: `${safePerson}/${splitFn}`
-        };
-      });
-    }
-
-    // 1b. Wide split files
-    if (Array.isArray(payload.wideSplitFiles)) {
-      job.wideSplitFiles = payload.wideSplitFiles.map((wsplit, i) => {
-        const wideFn = `Wide_${wsplit.filename || `Pen${i + 1}_${safePerson}.gcode`}`;
-        if (wsplit.gcode) {
-          fs.writeFileSync(path.join(personDir, wideFn), wsplit.gcode, 'utf8');
-          fs.writeFileSync(path.join(JOBS_DIR, wideFn), wsplit.gcode, 'utf8');
-        }
-        return {
-          name: wsplit.name || `Pen ${i + 1}`,
-          colorName: wsplit.colorName || wsplit.name || `Pen ${i + 1}`,
-          filename: wideFn,
-          relPath: `${safePerson}/${wideFn}`
-        };
-      });
-    }
-
-    // 2. Combined G-code
-    const combinedFn = `All_Colors_${safePerson}.gcode`;
-    if (payload.gcode) {
-      fs.writeFileSync(path.join(personDir, combinedFn), payload.gcode, 'utf8');
-      fs.writeFileSync(path.join(JOBS_DIR, combinedFn), payload.gcode, 'utf8');
-      fs.writeFileSync(path.join(JOBS_DIR, `${hash}_OpenBuilds.gcode`), payload.gcode, 'utf8');
-    }
-    job.gcodeFilename = combinedFn;
-
-    // 2b. Wide combined G-code
-    const wideCombinedFn = `Wide_All_Colors_${safePerson}.gcode`;
-    if (payload.wideGcode) {
-      fs.writeFileSync(path.join(personDir, wideCombinedFn), payload.wideGcode, 'utf8');
-      fs.writeFileSync(path.join(JOBS_DIR, wideCombinedFn), payload.wideGcode, 'utf8');
-    }
-    job.wideGcodeFilename = wideCombinedFn;
-
-    // 3. Calibrated SVG
-    const svgFn = `Calibrated_${safePerson}.svg`;
-    if (payload.svg) {
-      fs.writeFileSync(path.join(personDir, svgFn), payload.svg, 'utf8');
-      fs.writeFileSync(path.join(JOBS_DIR, svgFn), payload.svg, 'utf8');
-      fs.writeFileSync(path.join(JOBS_DIR, `${hash}_Calibrated.svg`), payload.svg, 'utf8');
-    }
-    job.svgFilename = svgFn;
-
-    // 3b. Wide Calibrated SVG
-    const wideSvgFn = `Wide_Calibrated_${safePerson}.svg`;
-    if (payload.wideSvg) {
-      fs.writeFileSync(path.join(personDir, wideSvgFn), payload.wideSvg, 'utf8');
-      fs.writeFileSync(path.join(JOBS_DIR, wideSvgFn), payload.wideSvg, 'utf8');
-    }
-    job.wideSvgFilename = wideSvgFn;
-
-    // 4. Save metadata json
-    fs.writeFileSync(path.join(personDir, `job_${hash}.json`), JSON.stringify(job, null, 2), 'utf8');
-    fs.writeFileSync(path.join(JOBS_DIR, `${hash}.json`), JSON.stringify(job, null, 2), 'utf8');
-
-    jobQueue.push(job);
-
-    const localIp = getLocalIP();
-    const nfcUrl = `http://${localIp}:${PORT}/p/${hash}`;
-    const viewerUrl = `http://${localIp}:${PORT}/viewer.html?id=${hash}`;
-
-    console.log(`\n📥 NEW JOB: [${job.id}] [Hash: ${hash}] from ${participant} (${paper}, ${job.penCount} pens, est ${job.timeFormatted})`);
-    console.log(`   🏷️  NFC Souvenir URL: ${nfcUrl}`);
-
-    return {
-      job,
-      jobId: job.id,
-      hash,
-      nfcUrl,
-      viewerUrl,
-      queuePosition: jobQueue.filter(j => j.status === 'queued').length
-    };
-  }
 
   // --- API: Submit New Poster Design (Participant or Instructor) ---
   if (req.method === 'POST' && pathname === '/api/workshop/submit') {
