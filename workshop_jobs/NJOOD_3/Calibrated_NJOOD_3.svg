@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  POSTER PLOTTER STUDIO - OPENBUILDS CAM 1:1 CALIBRATED SVG
+  Participant: NJOOD 3 | Job: JOB-01
+  Paper: 15.2 × 20.3 cm (6×8") (Vertical) (152mm x 203mm) | Safe Margin: 12mm
+  Physical Scale: 1 unit = 1 millimeter (No DPI conversion errors in OpenBuilds CAM)
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+     width="152mm"
+     height="203mm"
+     viewBox="0 0 152 203"
+     version="1.1">
+  
+  <!-- Non-Plotting Physical Paper Jig & Safe Margin Reference -->
+  <g id="Machine_Paper_Jig_Reference" inkscape:groupmode="layer" inkscape:label="[REFERENCE] Paper Bounds">
+    <rect x="0" y="0" width="152" height="203" fill="none" stroke="#cbd5e1" stroke-width="0.3" stroke-dasharray="3,3" />
+    <rect x="12" y="12" width="128" height="179" fill="none" stroke="#94a3b8" stroke-width="0.2" stroke-dasharray="1,2" />
+  </g>
+
+  <!-- Pen 1: Primary Layer -->
+  <g id="Pen_1_111827" inkscape:groupmode="layer" inkscape:label="Pen 1 (Midnight Black)">
+    <path d="M 43.24,129.91 L 47.50,129.35 L 50.34,129.25 M 58.86,130.23 L 60.28,130.55 L 63.11,131.25 L 65.95,131.99 L 67.37,132.36 L 68.79,132.72 L 70.21,133.06 L 69.01,135.24 L 78.95,137.09 L 91.72,136.28 M 94.56,156.63 L 64.75,160.82 L 56.23,163.02 M 68.79,154.20 L 67.37,154.48 L 38.98,160.71 L 24.78,162.63 M 33.51,136.75 L 34.93,136.39 L 36.35,135.99 L 37.77,135.56 M 44.87,141.67 L 73.27,141.59 L 121.54,143.98" fill="none" stroke="#111827" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- Pen 2: Accent Layer -->
+  
+
+  <!-- Pen 3: Highlight Layer -->
+  
+</svg>

@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Plotter Machine Souvenir · NFC Companion</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --card-border: rgba(148, 163, 184, 0.15);
+      --accent: #38bdf8;
+      --accent-purple: #c084fc;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --paper-bg: #faf8f5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #172554 0%, #090d16 70%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    /* Top App Bar */
+    .top-bar {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .badge-nfc-verified {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(168, 85, 247, 0.18);
+      border: 1px solid rgba(192, 132, 252, 0.35);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #e9d5ff;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #a855f7;
+      box-shadow: 0 0 8px #c084fc;
+      animation: pulseGlow 1.8s infinite ease-in-out;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.6; transform: scale(0.95); }
+      50% { opacity: 1; transform: scale(1.3); }
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-sound-toggle {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-sound-toggle.muted {
+      color: #64748b;
+      border-color: rgba(255, 255, 255, 0.06);
+    }
+
+    /* Main Container */
+    .main-wrap {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* Header Title Card */
+    .title-card {
+      width: 100%;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .title-left h1 {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-left p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .hash-badge {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+
+    /* Plotter Canvas Wrapper */
+    .plotter-stage-card {
+      width: 100%;
+      background: #020617;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Ambient Machine Rails Overlay */
+    .gantry-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      border: 1px solid rgba(56, 189, 248, 0.08);
+      border-radius: 20px;
+    }
+
+    /* Status Banner Toast */
+    .machine-status-banner {
+      position: absolute;
+      top: 24px;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #f0f9ff;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 20;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s ease;
+      opacity: 0.95;
+    }
+
+    .machine-status-banner.swapping {
+      border-color: #f59e0b;
+      color: #fef3c7;
+      background: rgba(30, 20, 10, 0.95);
+      animation: pulseAlert 0.8s infinite alternate;
+    }
+
+    @keyframes pulseAlert {
+      from { transform: scale(1); }
+      to { transform: scale(1.04); }
+    }
+
+    /* Paper Area */
+    .paper-viewport {
+      width: 100%;
+      max-width: 520px;
+      aspect-ratio: 210 / 297; /* A4 standard portrait */
+      background: var(--paper-bg);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 1px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .paper-margin-guide {
+      position: absolute;
+      top: 5.05%;
+      left: 7.14%;
+      right: 7.14%;
+      bottom: 5.05%;
+      border: 1px dashed rgba(0, 0, 0, 0.1);
+      pointer-events: none;
+    }
+
+    /* The HTML5 Canvas where paths are progressively drawn */
+    #plotterCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Virtual Pen Carriage Crosshair */
+    #penCarriage {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      transition: transform 0.04s linear;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .carriage-reticle {
+      width: 22px;
+      height: 22px;
+      border: 1.5px solid #0284c7;
+      border-radius: 50%;
+      position: absolute;
+      box-shadow: 0 0 8px rgba(2, 132, 199, 0.6);
+      transition: all 0.15s ease;
+    }
+
+    .carriage-crosshair-h {
+      width: 28px;
+      height: 1px;
+      background: rgba(2, 132, 199, 0.7);
+      position: absolute;
+    }
+
+    .carriage-crosshair-v {
+      width: 1px;
+      height: 28px;
+      background: rgba(2, 132, 199, 0.7);
+      position: absolute;
+    }
+
+    .pen-tip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #111111;
+      border: 1.5px solid #ffffff;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+      position: absolute;
+      z-index: 2;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    /* Pen UP state: elevated shadow */
+    .pen-state-up .pen-tip-dot {
+      transform: scale(1.4);
+      box-shadow: 4px 6px 12px rgba(0, 0, 0, 0.4);
+    }
+    .pen-state-up .carriage-reticle {
+      border-color: #38bdf8;
+      transform: scale(1.2);
+    }
+
+    /* Pen DOWN state: touching paper */
+    .pen-state-down .pen-tip-dot {
+      transform: scale(1.0);
+      box-shadow: 0 0 2px rgba(0, 0, 0, 0.9);
+    }
+    .pen-state-down .carriage-reticle {
+      border-color: #f43f5e;
+      transform: scale(0.9);
+    }
+
+    /* Playback Controls Card */
+    .controls-card {
+      width: 100%;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Scrubber Row */
+    .scrub-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .time-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      min-width: 44px;
+    }
+
+    .scrub-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .scrub-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 8px #0284c7;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+
+    .scrub-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+    }
+
+    /* Playback Buttons Row */
+    .playback-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .main-play-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-play-pause {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .btn-play-pause:hover {
+      transform: scale(1.06);
+    }
+
+    .btn-control-chip {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e2e8f0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-control-chip:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .speed-pills-group {
+      display: flex;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      gap: 3px;
+    }
+
+    .speed-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .speed-btn.active {
+      background: #0284c7;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+    }
+
+    /* Provenance Stats Card */
+    .stats-card {
+      width: 100%;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .stats-header {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--accent-purple);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat-box {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+
+    .stat-value {
+      font-size: 14px;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+
+    .pens-swatches-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pen-swatch-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .pen-color-circle {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    /* Action Buttons Row */
+    .actions-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .btn-action-tile {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #f8fafc;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn-action-tile:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .btn-action-tile.primary {
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-action-tile.primary:hover {
+      background: linear-gradient(135deg, #6d28d9, #4338ca);
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 20px;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="badge-nfc-verified">
+      <span class="pulse-dot"></span>
+      <span>NFC Verified Souvenir</span>
+    </div>
+    <div class="top-actions">
+      <button type="button" class="btn-sound-toggle" id="btnSoundToggle" title="Toggle Mechanical Audio">
+        <span id="soundIcon">🔊</span> <span id="soundLabel">Plotter Audio</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="main-wrap">
+
+    <!-- Title Card -->
+    <div class="title-card">
+      <div class="title-left">
+        <h1>
+          <span>🖋️</span>
+          <span id="posterTitleText">Poster Souvenir</span>
+        </h1>
+        <p id="posterSubText">OpenBuilds GRBL Workshop · Standardized Plot</p>
+      </div>
+      <div class="hash-badge" id="jobHashBadge">#plotting</div>
+    </div>
+
+    <!-- Plotter Stage Canvas Card -->
+    <div class="plotter-stage-card">
+      <div class="gantry-overlay"></div>
+
+      <!-- Real-time machine status toast -->
+      <div class="machine-status-banner" id="machineStatusBanner">
+        <span id="statusIcon">⚡</span>
+        <span id="statusText">Pen 1 Active · Plotting</span>
+      </div>
+
+      <!-- Physical Paper Surface -->
+      <div class="paper-viewport" id="paperViewport">
+        <div class="paper-margin-guide"></div>
+        <canvas id="plotterCanvas" width="800" height="1131"></canvas>
+
+        <!-- Simulated Plotter Carriage -->
+        <div id="penCarriage" class="pen-state-up">
+          <div class="carriage-reticle"></div>
+          <div class="carriage-crosshair-h"></div>
+          <div class="carriage-crosshair-v"></div>
+          <div class="pen-tip-dot" id="penTipDot"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Playback Controls -->
+    <div class="controls-card">
+      <div class="scrub-row">
+        <span class="time-label" id="currentTimeLabel">0:00</span>
+        <input type="range" class="scrub-slider" id="scrubSlider" min="0" max="1000" value="0">
+        <span class="time-label" id="totalTimeLabel">3:45</span>
+      </div>
+
+      <div class="playback-row">
+        <div class="main-play-group">
+          <button type="button" class="btn-play-pause" id="btnPlayPause" title="Play/Pause">
+            <span id="playPauseIcon">▶</span>
+          </button>
+          <button type="button" class="btn-control-chip" id="btnReplay" title="Replay from Beginning">
+            ↺ Replay
+          </button>
+        </div>
+
+        <!-- Speed selector -->
+        <div class="speed-pills-group">
+          <button type="button" class="speed-btn" data-speed="1">1x</button>
+          <button type="button" class="speed-btn active" data-speed="3">3x</button>
+          <button type="button" class="speed-btn" data-speed="8">8x</button>
+          <button type="button" class="speed-btn" data-speed="20">20x</button>
+          <button type="button" class="speed-btn" data-speed="999">⚡ Fast</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Machine Provenance & Specifications -->
+    <div class="stats-card">
+      <div class="stats-header">
+        <span>📐</span> Machine Provenance & Plot Specs
+      </div>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">Paper Format</div>
+          <div class="stat-value" id="statPaper">A4 (210×297mm)</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Total Pen Path</div>
+          <div class="stat-value" id="statDistance">24.5 meters</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Pen Lifts</div>
+          <div class="stat-value" id="statLifts">⚡ 2 Lifts (Optimized)</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Marker Tip</div>
+          <div class="stat-value" id="statMarker">Chunky Marker (2.8mm)</div>
+        </div>
+      </div>
+
+      <div class="stat-label" style="margin-bottom: 6px;">Pen Color Palette:</div>
+      <div class="pens-swatches-row" id="pensSwatchesRow">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Souvenir Export Actions -->
+    <div class="actions-grid">
+      <button type="button" class="btn-action-tile primary" id="btnSavePng">
+        <span>📸</span> Save Poster PNG
+      </button>
+      <button type="button" class="btn-action-tile" id="btnDownloadSvg">
+        <span>📐</span> Download SVG
+      </button>
+      <button type="button" class="btn-action-tile" id="btnShareUrl">
+        <span>🔗</span> Share Souvenir Link
+      </button>
+      <button type="button" class="btn-action-tile" id="btnWriteNfcSticker">
+        <span>🏷️</span> Program NFC Sticker
+      </button>
+    </div>
+
+  </div>
+
+  <footer>
+    OpenBuilds ACRO Pen Plotter Workshop · Physical Poster NFC Twin · Zero-Recalibration Workflow
+  </footer>
+
+  <script>
+    /**
+     * Plotter Machine Souvenir Animation Engine
+     * Simulates physical CNC pen plotting stroke-by-stroke with audio synthesis.
+     */
+    (function() {
+      "use strict";
+
+      // --- URL Parameters ---
+      const urlParams = new URLSearchParams(window.location.search);
+      const jobIdOrHash = urlParams.get('id') || urlParams.get('job') || "demo";
+
+      // --- Audio Synthesizer (Zero External Dependencies) ---
+      class PlotterAudioEngine {
+        constructor() {
+          this.ctx = null;
+          this.motorOsc = null;
+          this.motorGain = null;
+          this.scrapeNode = null;
+          this.scrapeGain = null;
+          this.muted = false;
+          this.initialized = false;
+        }
+
+        init() {
+          if (this.initialized) return;
+          try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
+
+            // 1. Stepper Motor Frequency Oscillator
+            this.motorOsc = this.ctx.createOscillator();
+            this.motorOsc.type = "sawtooth";
+            this.motorOsc.frequency.setValueAtTime(140, this.ctx.currentTime);
+
+            this.motorGain = this.ctx.createGain();
+            this.motorGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+            // Filter motor tone for CNC mechanical sound
+            const motorFilter = this.ctx.createBiquadFilter();
+            motorFilter.type = "bandpass";
+            motorFilter.frequency.setValueAtTime(420, this.ctx.currentTime);
+            motorFilter.Q.setValueAtTime(3.0, this.ctx.currentTime);
+
+            this.motorOsc.connect(motorFilter);
+            motorFilter.connect(this.motorGain);
+            this.motorGain.connect(this.ctx.destination);
+            this.motorOsc.start();
+
+            // 2. Chunky Marker Pen Scrape (Filtered White Noise)
+            const bufferSize = this.ctx.sampleRate * 2;
+            const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+              output[i] = Math.random() * 2 - 1;
+            }
+
+            const whiteNoise = this.ctx.createBufferSource();
+            whiteNoise.buffer = noiseBuffer;
+            whiteNoise.loop = true;
+
+            const scrapeFilter = this.ctx.createBiquadFilter();
+            scrapeFilter.type = "bandpass";
+            scrapeFilter.frequency.setValueAtTime(1800, this.ctx.currentTime);
+            scrapeFilter.Q.setValueAtTime(1.5, this.ctx.currentTime);
+
+            this.scrapeGain = this.ctx.createGain();
+            this.scrapeGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+            whiteNoise.connect(scrapeFilter);
+            scrapeFilter.connect(this.scrapeGain);
+            this.scrapeGain.connect(this.ctx.destination);
+            whiteNoise.start();
+
+            this.initialized = true;
+          } catch (e) {}
+        }
+
+        update(isMoving, isPenDown, speedFactor) {
+          if (!this.initialized || this.muted || !this.ctx) return;
+          if (this.ctx.state === "suspended") this.ctx.resume();
+
+          const now = this.ctx.currentTime;
+          if (!isMoving) {
+            this.motorGain.gain.setTargetAtTime(0, now, 0.05);
+            this.scrapeGain.gain.setTargetAtTime(0, now, 0.05);
+            return;
+          }
+
+          // Stepper motor pitch based on speed
+          const freq = isPenDown ? 160 + (speedFactor * 30) : 320 + (speedFactor * 50);
+          this.motorOsc.frequency.setTargetAtTime(Math.min(freq, 800), now, 0.04);
+          this.motorGain.gain.setTargetAtTime(0.04, now, 0.05);
+
+          // Marker scrape noise only when pen is DOWN on paper
+          if (isPenDown) {
+            this.scrapeGain.gain.setTargetAtTime(0.08, now, 0.05);
+          } else {
+            this.scrapeGain.gain.setTargetAtTime(0, now, 0.05);
+          }
+        }
+
+        playPenClick(isDown) {
+          if (!this.initialized || this.muted || !this.ctx) return;
+          try {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.frequency.setValueAtTime(isDown ? 280 : 540, this.ctx.currentTime);
+            g.gain.setValueAtTime(0.08, this.ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+            osc.connect(g);
+            g.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.05);
+          } catch (e) {}
+        }
+
+        playChime() {
+          if (!this.initialized || this.muted || !this.ctx) return;
+          try {
+            [523.25, 659.25, 783.99].forEach((freq, idx) => {
+              const osc = this.ctx.createOscillator();
+              const g = this.ctx.createGain();
+              osc.type = "sine";
+              osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.1);
+              g.gain.setValueAtTime(0.12, this.ctx.currentTime + idx * 0.1);
+              g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.1 + 0.4);
+              osc.connect(g);
+              g.connect(this.ctx.destination);
+              osc.start(this.ctx.currentTime + idx * 0.1);
+              osc.stop(this.ctx.currentTime + idx * 0.1 + 0.45);
+            });
+          } catch (e) {}
+        }
+
+        toggleMute() {
+          this.muted = !this.muted;
+          if (this.muted && this.initialized) {
+            this.motorGain.gain.setValueAtTime(0, this.ctx.currentTime);
+            this.scrapeGain.gain.setValueAtTime(0, this.ctx.currentTime);
+          }
+          return this.muted;
+        }
+      }
+
+      const audio = new PlotterAudioEngine();
+
+      // --- Animation Player State ---
+      const state = {
+        job: null,
+        layers: [],        // [{ name, color, strokeWidth, paths: [ [ {x, y}, ... ] ] }]
+        totalLength: 0,    // Total distance of all paths in mm
+        currentLength: 0,  // Progress in mm
+        isPlaying: true,
+        speedFactor: 3,    // 1x, 3x, 8x, 20x, 999x
+        isPenDown: false,
+        penX: 0,
+        penY: 0,
+        currentLayerIndex: 0,
+        isSwappingPen: false,
+        paperW: 210,       // mm
+        paperH: 297        // mm
+      };
+
+      // --- Canvas and DOM Elements ---
+      const canvas = document.getElementById("plotterCanvas");
+      const ctx = canvas.getContext("2d");
+      const penCarriage = document.getElementById("penCarriage");
+      const penTipDot = document.getElementById("penTipDot");
+      const statusBanner = document.getElementById("machineStatusBanner");
+      const statusText = document.getElementById("statusText");
+      const statusIcon = document.getElementById("statusIcon");
+      const scrubSlider = document.getElementById("scrubSlider");
+      const curTimeLabel = document.getElementById("currentTimeLabel");
+      const totTimeLabel = document.getElementById("totalTimeLabel");
+      const btnPlay = document.getElementById("btnPlayPause");
+      const playIcon = document.getElementById("playPauseIcon");
+
+      // --- Generate Built-in Demo Artwork (Fallback if offline or demo) ---
+      function generateDemoData() {
+        const pW = 210, pH = 297;
+        const cx = pW / 2, cy = pH / 2;
+        const layer1 = [];
+        const layer2 = [];
+
+        // Pen 1: Concentric Bauhaus geometric arches
+        for (let r = 25; r <= 85; r += 7) {
+          const pts = [];
+          for (let a = 0; a <= Math.PI; a += 0.05) {
+            pts.push({ x: cx + Math.cos(a) * r, y: cy - 20 - Math.sin(a) * r });
+          }
+          layer1.push(pts);
+        }
+
+        // Pen 1: Modernist cross-hatch block
+        for (let y = cy + 20; y <= cy + 90; y += 4.5) {
+          layer1.push([
+            { x: cx - 60, y: y },
+            { x: cx + 60, y: y }
+          ]);
+        }
+
+        // Pen 2 (Accent Coral): Flowing fluid curves
+        for (let i = 0; i < 9; i++) {
+          const pts = [];
+          const yOff = cy - 60 + i * 16;
+          for (let x = cx - 75; x <= cx + 75; x += 3) {
+            const y = yOff + Math.sin(x * 0.06 + i * 0.4) * 14;
+            pts.push({ x, y });
+          }
+          layer2.push(pts);
+        }
+
+        return {
+          id: "DEMO-01",
+          hash: jobIdOrHash === "demo" ? "a7f92b4c10" : jobIdOrHash,
+          participantName: "Creative Explorer",
+          obfuscatedName: "Participant (C***)",
+          paperSize: "A4",
+          markerType: "chunky",
+          penCount: 2,
+          penNames: ["Ultramarine Watercolor", "Coral Acrylic"],
+          penColors: ["#0055ff", "#ff3b5c"],
+          timeFormatted: "3m 48s",
+          penLifts: 2,
+          drawDistMeters: "26.4m",
+          paths: { layer1, layer2 }
+        };
+      }
+
+      // --- Calculate Path Geometry & Precompute Distance ---
+      function prepareLayers(jobData) {
+        state.layers = [];
+        state.totalLength = 0;
+
+        const colors = jobData.penColors || ["#111111", "#ff3b5c", "#0066cc"];
+        const names = jobData.penNames || ["Pen 1", "Pen 2", "Pen 3"];
+        const rawPaths = jobData.paths || {};
+
+        const keys = ["layer1", "layer2", "layer3"];
+        keys.forEach((k, idx) => {
+          const list = rawPaths[k];
+          if (Array.isArray(list) && list.length > 0) {
+            let layerDist = 0;
+            const processedPaths = list.map(poly => {
+              let polyDist = 0;
+              for (let i = 0; i < poly.length - 1; i++) {
+                const dx = poly[i + 1].x - poly[i].x;
+                const dy = poly[i + 1].y - poly[i].y;
+                polyDist += Math.sqrt(dx * dx + dy * dy);
+              }
+              layerDist += polyDist;
+              return { points: poly, length: polyDist };
+            });
+
+            state.layers.push({
+              index: idx + 1,
+              name: names[idx] || `Pen ${idx + 1}`,
+              color: colors[idx] || "#111111",
+              strokeWidth: jobData.markerType === "broad" ? 8 : (jobData.markerType === "chunky" ? 5.5 : 2.5),
+              paths: processedPaths,
+              length: layerDist
+            });
+
+            state.totalLength += layerDist;
+          }
+        });
+
+        // Update Total Time Label
+        const estSec = Math.round(state.totalLength / 50); // ~50mm/sec average plot speed
+        const m = Math.floor(estSec / 60);
+        const s = estSec % 60;
+        totTimeLabel.textContent = `${m}:${String(s).padStart(2, '0')}`;
+      }
+
+      // --- Draw State onto Canvas up to targetDistance ---
+      function renderPlotProgress(targetDist) {
+        // Clear canvas with paper color
+        ctx.fillStyle = "#faf8f5";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Sub-pixel antialiasing & line styling
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        const scaleX = canvas.width / state.paperW;
+        const scaleY = canvas.height / state.paperH;
+
+        let accumDist = 0;
+        let headPos = { x: 10, y: 10 };
+        let isPenDownNow = false;
+        let activeLayer = state.layers[0];
+        let layerIdx = 0;
+
+        for (let l = 0; l < state.layers.length; l++) {
+          const layer = state.layers[l];
+          ctx.strokeStyle = layer.color;
+          ctx.lineWidth = layer.strokeWidth;
+
+          for (let p = 0; p < layer.paths.length; p++) {
+            const poly = layer.paths[p];
+            const pts = poly.points;
+            if (pts.length < 2) continue;
+
+            const remaining = targetDist - accumDist;
+
+            if (remaining <= 0) {
+              // We haven't reached this path yet
+              break;
+            } else if (remaining >= poly.length) {
+              // Path fully drawn
+              ctx.beginPath();
+              ctx.moveTo(pts[0].x * scaleX, pts[0].y * scaleY);
+              for (let i = 1; i < pts.length; i++) {
+                ctx.lineTo(pts[i].x * scaleX, pts[i].y * scaleY);
+              }
+              ctx.stroke();
+
+              accumDist += poly.length;
+              headPos = pts[pts.length - 1];
+              activeLayer = layer;
+              layerIdx = l;
+              isPenDownNow = false;
+            } else {
+              // Path is actively being drawn right now!
+              ctx.beginPath();
+              ctx.moveTo(pts[0].x * scaleX, pts[0].y * scaleY);
+
+              let curSegmentDist = 0;
+              let lastPt = pts[0];
+
+              for (let i = 0; i < pts.length - 1; i++) {
+                const p1 = pts[i];
+                const p2 = pts[i + 1];
+                const segLen = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
+
+                if (curSegmentDist + segLen <= remaining) {
+                  ctx.lineTo(p2.x * scaleX, p2.y * scaleY);
+                  curSegmentDist += segLen;
+                  lastPt = p2;
+                } else {
+                  // Partial segment interpolation
+                  const t = (remaining - curSegmentDist) / (segLen || 1);
+                  const interpX = p1.x + (p2.x - p1.x) * t;
+                  const interpY = p1.y + (p2.y - p1.y) * t;
+                  ctx.lineTo(interpX * scaleX, interpY * scaleY);
+                  lastPt = { x: interpX, y: interpY };
+                  break;
+                }
+              }
+
+              ctx.stroke();
+              accumDist = targetDist;
+              headPos = lastPt;
+              activeLayer = layer;
+              layerIdx = l;
+              isPenDownNow = true;
+              break;
+            }
+          }
+
+          if (accumDist >= targetDist) break;
+        }
+
+        // Update virtual carriage head position (percentage of viewport)
+        const pctX = (headPos.x / state.paperW) * 100;
+        const pctY = (headPos.y / state.paperH) * 100;
+        penCarriage.style.left = `${pctX}%`;
+        penCarriage.style.top = `${pctY}%`;
+
+        // Update pen UP/DOWN visuals
+        if (isPenDownNow !== state.isPenDown) {
+          state.isPenDown = isPenDownNow;
+          penCarriage.className = isPenDownNow ? "pen-state-down" : "pen-state-up";
+          audio.playPenClick(isPenDownNow);
+        }
+
+        // Update Pen Tip Color
+        if (activeLayer) {
+          penTipDot.style.background = activeLayer.color;
+        }
+
+        // Update Status Toast
+        if (activeLayer && layerIdx !== state.currentLayerIndex) {
+          state.currentLayerIndex = layerIdx;
+          statusBanner.classList.add("swapping");
+          statusText.textContent = `Tool Change: Swapping to ${activeLayer.name}...`;
+          statusIcon.textContent = "🔄";
+          audio.playChime();
+          setTimeout(() => {
+            statusBanner.classList.remove("swapping");
+            statusText.textContent = `${activeLayer.name} · Drawing`;
+            statusIcon.textContent = "⚡";
+          }, 1400);
+        } else if (!statusBanner.classList.contains("swapping")) {
+          if (targetDist >= state.totalLength) {
+            statusText.textContent = "Plot Completed · Zero Calibration Passed!";
+            statusIcon.textContent = "✓";
+          } else {
+            statusText.textContent = `${activeLayer ? activeLayer.name : "Pen 1"} · Plotting`;
+            statusIcon.textContent = "⚡";
+          }
+        }
+
+        // Update Timeline slider and labels
+        const progFraction = state.totalLength > 0 ? (targetDist / state.totalLength) : 0;
+        scrubSlider.value = Math.round(progFraction * 1000);
+
+        const curSec = Math.round(progFraction * (state.totalLength / 50));
+        const cm = Math.floor(curSec / 60);
+        const cs = curSec % 60;
+        curTimeLabel.textContent = `${cm}:${String(cs).padStart(2, '0')}`;
+
+        // Update Stepper Motor Audio
+        audio.update(state.isPlaying && targetDist < state.totalLength, isPenDownNow, state.speedFactor);
+      }
+
+      // --- Animation Loop ---
+      let lastTime = performance.now();
+
+      function animationLoop(now) {
+        const delta = Math.min((now - lastTime) / 1000, 0.1);
+        lastTime = now;
+
+        if (state.isPlaying && state.totalLength > 0 && state.currentLength < state.totalLength) {
+          // Speed step in mm
+          const stepDist = (50 * state.speedFactor) * delta; // Base speed: 50mm/s
+          state.currentLength = Math.min(state.currentLength + stepDist, state.totalLength);
+
+          renderPlotProgress(state.currentLength);
+
+          if (state.currentLength >= state.totalLength) {
+            state.isPlaying = false;
+            playIcon.textContent = "↺";
+            audio.update(false, false, 0);
+          }
+        }
+
+        requestAnimationFrame(animationLoop);
+      }
+
+      // --- Populate UI Metadata Card ---
+      function populateMetadata(job) {
+        state.job = job;
+        document.getElementById("posterTitleText").textContent = `${job.obfuscatedName || job.participantName || "Souvenir"} Poster`;
+        document.getElementById("jobHashBadge").textContent = `#${job.hash || job.id}`;
+        document.getElementById("statPaper").textContent = `${job.paperSize || 'A4'} (Calibrated)`;
+        document.getElementById("statDistance").textContent = job.drawDistMeters || `${(state.totalLength / 1000).toFixed(1)}m`;
+        document.getElementById("statLifts").textContent = `⚡ ${job.penLifts ?? 2} Lifts`;
+        document.getElementById("statMarker").textContent = job.markerType === "broad" ? "Broad Posca (5.0mm)" : (job.markerType === "chunky" ? "Chunky Marker (2.8mm)" : "Fine Liner (0.35mm)");
+
+        // Color Swatches
+        const row = document.getElementById("pensSwatchesRow");
+        if (row) {
+          row.innerHTML = "";
+          (job.penColors || ["#111111"]).forEach((c, i) => {
+            const name = (job.penNames && job.penNames[i]) || `Pen ${i + 1}`;
+            const chip = document.createElement("div");
+            chip.className = "pen-swatch-chip";
+            chip.innerHTML = `<span class="pen-color-circle" style="background:${c}"></span> <span>${name}</span>`;
+            row.appendChild(chip);
+          });
+        }
+      }
+
+      // --- Load Job Data (Network -> Local Disk -> localStorage -> Demo) ---
+      async function loadJobData() {
+        let loadedJob = null;
+
+        // 1. Try server API
+        try {
+          const res = await fetch(`/api/workshop/job/${jobIdOrHash}`);
+          if (res.ok) {
+            loadedJob = await res.json();
+          }
+        } catch (e) {}
+
+        // 2. Try static json file in workshop_jobs/
+        if (!loadedJob) {
+          try {
+            const res = await fetch(`./workshop_jobs/${jobIdOrHash}.json`);
+            if (res.ok) {
+              loadedJob = await res.json();
+            }
+          } catch (e) {}
+        }
+
+        // 3. Try localStorage queue
+        if (!loadedJob) {
+          try {
+            const local = JSON.parse(localStorage.getItem("plotter_local_queue") || "[]");
+            loadedJob = local.find(j => j.hash === jobIdOrHash || j.id === jobIdOrHash);
+          } catch (e) {}
+        }
+
+        // 4. Fallback to demo
+        if (!loadedJob) {
+          loadedJob = generateDemoData();
+        }
+
+        populateMetadata(loadedJob);
+        prepareLayers(loadedJob);
+        renderPlotProgress(0);
+
+        // Start playback
+        lastTime = performance.now();
+        requestAnimationFrame(animationLoop);
+      }
+
+      // --- Interactive Controls Wiring ---
+      btnPlay.addEventListener("click", () => {
+        audio.init();
+        if (state.currentLength >= state.totalLength) {
+          state.currentLength = 0;
+          state.isPlaying = true;
+          playIcon.textContent = "⏸";
+        } else {
+          state.isPlaying = !state.isPlaying;
+          playIcon.textContent = state.isPlaying ? "⏸" : "▶";
+        }
+        audio.update(state.isPlaying, state.isPenDown, state.speedFactor);
+      });
+
+      document.getElementById("btnReplay").addEventListener("click", () => {
+        audio.init();
+        state.currentLength = 0;
+        state.isPlaying = true;
+        playIcon.textContent = "⏸";
+        renderPlotProgress(0);
+      });
+
+      scrubSlider.addEventListener("input", (e) => {
+        audio.init();
+        const fraction = Number(e.target.value) / 1000;
+        state.currentLength = fraction * state.totalLength;
+        renderPlotProgress(state.currentLength);
+      });
+
+      // Speed buttons
+      document.querySelectorAll(".speed-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          audio.init();
+          document.querySelectorAll(".speed-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          const spd = Number(btn.getAttribute("data-speed"));
+          if (spd === 999) {
+            // Fast Finish
+            state.currentLength = state.totalLength;
+            renderPlotProgress(state.totalLength);
+            state.isPlaying = false;
+            playIcon.textContent = "↺";
+          } else {
+            state.speedFactor = spd;
+          }
+        });
+      });
+
+      // Audio Toggle Button
+      document.getElementById("btnSoundToggle").addEventListener("click", () => {
+        audio.init();
+        const isMuted = audio.toggleMute();
+        const btn = document.getElementById("btnSoundToggle");
+        const icon = document.getElementById("soundIcon");
+        const lbl = document.getElementById("soundLabel");
+        if (isMuted) {
+          btn.classList.add("muted");
+          icon.textContent = "🔇";
+          lbl.textContent = "Muted";
+        } else {
+          btn.classList.remove("muted");
+          icon.textContent = "🔊";
+          lbl.textContent = "Audio ON";
+        }
+      });
+
+      // Export: Save PNG
+      document.getElementById("btnSavePng").addEventListener("click", () => {
+        // Render completed poster for clean export
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = 1600;
+        tempCanvas.height = 2262; // High-res 300 DPI A4
+        const tCtx = tempCanvas.getContext("2d");
+        tCtx.fillStyle = "#faf8f5";
+        tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        tCtx.lineCap = "round";
+        tCtx.lineJoin = "round";
+
+        const sx = tempCanvas.width / state.paperW;
+        const sy = tempCanvas.height / state.paperH;
+
+        state.layers.forEach(layer => {
+          tCtx.strokeStyle = layer.color;
+          tCtx.lineWidth = layer.strokeWidth * (tempCanvas.width / canvas.width);
+          layer.paths.forEach(poly => {
+            if (poly.points.length < 2) return;
+            tCtx.beginPath();
+            tCtx.moveTo(poly.points[0].x * sx, poly.points[0].y * sy);
+            for (let i = 1; i < poly.points.length; i++) {
+              tCtx.lineTo(poly.points[i].x * sx, poly.points[i].y * sy);
+            }
+            tCtx.stroke();
+          });
+        });
+
+        const link = document.createElement("a");
+        link.download = `Poster_${state.job?.hash || 'plot'}_HighRes.png`;
+        link.href = tempCanvas.toDataURL("image/png");
+        link.click();
+      });
+
+      // Export: Download SVG
+      document.getElementById("btnDownloadSvg").addEventListener("click", () => {
+        let svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${state.paperW} ${state.paperH}" width="${state.paperW}mm" height="${state.paperH}mm">\n<rect width="${state.paperW}" height="${state.paperH}" fill="#faf8f5"/>\n`;
+        state.layers.forEach((layer, idx) => {
+          svg += `  <g id="pen_${idx + 1}" stroke="${layer.color}" stroke-width="${layer.strokeWidth * 0.2}" fill="none" stroke-linecap="round">\n`;
+          layer.paths.forEach(poly => {
+            if (poly.points.length < 2) return;
+            const d = poly.points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
+            svg += `    <path d="${d}"/>\n`;
+          });
+          svg += `  </g>\n`;
+        });
+        svg += `</svg>`;
+
+        const blob = new Blob([svg], { type: "image/svg+xml" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `Poster_${state.job?.hash || 'plot'}_Calibrated.svg`;
+        a.click();
+      });
+
+      // Share Souvenir URL
+      document.getElementById("btnShareUrl").addEventListener("click", () => {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(window.location.href).then(() => {
+            const btn = document.getElementById("btnShareUrl");
+            btn.innerHTML = `<span>✓</span> Copied Link!`;
+            setTimeout(() => { btn.innerHTML = `<span>🔗</span> Share Souvenir Link`; }, 2000);
+          });
+        }
+      });
+
+      // Program NFC Sticker (Web NFC API)
+      document.getElementById("btnWriteNfcSticker").addEventListener("click", async () => {
+        if (!('NDEFReader' in window)) {
+          alert(`Web NFC is supported in Chrome on Android.\n\nQuick 3-step setup on iPhone/iOS or other devices:\n1. Download free "NFC Tools" app\n2. Tap "Write" > "Add a record" > "URL"\n3. Paste this URL:\n${window.location.href}\n4. Tap "Write" and touch your physical sticker!`);
+          return;
+        }
+
+        try {
+          const ndef = new window.NDEFReader();
+          alert("Touch your phone to the NFC sticker now to program it!");
+          await ndef.write({
+            records: [{ recordType: "url", data: window.location.href }]
+          });
+          alert("🎉 NFC Souvenir Sticker programmed successfully!");
+        } catch (err) {
+          alert(`NFC Write Error: ${err.message}`);
+        }
+      });
+
+      // Initialize
+      loadJobData();
+
+    })();
+  </script>
+</body>
+</html>

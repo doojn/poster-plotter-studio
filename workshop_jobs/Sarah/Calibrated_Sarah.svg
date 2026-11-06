@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  POSTER PLOTTER STUDIO - OPENBUILDS CAM 1:1 CALIBRATED SVG
+  Participant: Sarah | Job: JOB-01
+  Paper: 15.2x20.3cm (203mm x 152mm) | Safe Margin: 12mm
+  Physical Scale: 1 unit = 1 millimeter (No DPI conversion errors in OpenBuilds CAM)
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+     width="203mm"
+     height="152mm"
+     viewBox="0 0 203 152"
+     version="1.1">
+  
+  <!-- Non-Plotting Physical Paper Jig & Safe Margin Reference -->
+  <g id="Machine_Paper_Jig_Reference" inkscape:groupmode="layer" inkscape:label="[REFERENCE] Paper Bounds">
+    <rect x="0" y="0" width="203" height="152" fill="none" stroke="#cbd5e1" stroke-width="0.3" stroke-dasharray="3,3" />
+    <rect x="12" y="12" width="179" height="128" fill="none" stroke="#94a3b8" stroke-width="0.2" stroke-dasharray="1,2" />
+  </g>
+
+  <!-- Pen 1: Primary Layer -->
+  <g id="Pen_1_111827" inkscape:groupmode="layer" inkscape:label="Pen 1 (Midnight Black)">
+    <path d="M 20.00,20.00 L 20.00,60.00 L 80.00,60.00" fill="none" stroke="#111827" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- Pen 2: Accent Layer -->
+  <g id="Pen_2_e11d48" inkscape:groupmode="layer" inkscape:label="Pen 2 (Crimson Red)">
+    <path d="M 30.00,70.00 L 30.00,90.00 L 90.00,90.00" fill="none" stroke="#e11d48" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- Pen 3: Highlight Layer -->
+  <g id="Pen_3_0284c7" inkscape:groupmode="layer" inkscape:label="Pen 3 (Cobalt Blue)">
+    <path d="M 40.00,100.00 L 40.00,130.00 L 100.00,130.00" fill="none" stroke="#0284c7" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>

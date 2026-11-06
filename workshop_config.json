@@ -1,0 +1,16 @@
+{
+  "lockedForWorkshop": true,
+  "paperSize": "a5",
+  "paperOrientation": "portrait",
+  "marginMm": 12,
+  "maxPensAllowed": 2,
+  "markerType": "chunky",
+  "machineProfile": "OpenBuilds ACRO (Servo PWM)",
+  "jigOffsetX": 0,
+  "jigOffsetY": 0,
+  "feedrateDraw": 2200,
+  "feedrateTravel": 3500,
+  "origin": "bottom_left",
+  "actuation": "servo_pwm",
+  "githubPagesBaseUrl": "https://doojn.github.io/poster-plotter-studio/"
+}

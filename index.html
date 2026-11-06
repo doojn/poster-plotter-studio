@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poster Plotter Studio · Algorithmic Pen Plotter Art</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top App Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-icon-box">🖋️</div>
+      <div class="brand-text">
+        <h1 data-i18n="appTitle">Poster Plotter Studio</h1>
+        <p data-i18n="appSub">Contemporary Algorithmic Vector Art for Pen Plotters</p>
+      </div>
+    </div>
+    <!-- Top-Level Navigation Tabs -->
+    <nav class="app-nav-tabs">
+      <button type="button" class="nav-tab active" id="tabTransform" data-tab="transform">
+        <span class="nav-tab-icon">🖼️</span>
+        <span class="nav-tab-label" data-i18n="tabTransform">Transform Poster</span>
+      </button>
+      <button type="button" class="nav-tab" id="tabCustomPoster" data-tab="custom">
+        <span class="nav-tab-icon">✏️</span>
+        <span class="nav-tab-label" data-i18n="tabCustom">Make Your Own Poster</span>
+        <span class="nav-tab-badge" data-i18n="tabCustomBadge">Interactive Canvas</span>
+      </button>
+    </nav>
+    <div class="header-actions">
+      <span class="header-a5-pill">📐 15.2 × 20.3 cm (6×8" Art Pad)</span>
+      <button type="button" class="btn-calib-header operator-only" id="btnHeaderCalibModal" title="Open Machine Calibration & Pen Up/Down Tests" style="display:none;">
+        <span class="cal-icon">🎯</span>
+        <span data-i18n="btnHeaderCalib">Calibration</span>
+      </button>
+      <button type="button" class="btn-workshop-queue" id="btnOpenWorkshopModal" title="Workshop Plotter Queue & Machine Calibration" style="display:none;">
+        <span class="queue-icon">📋</span>
+        <span data-i18n="btnWorkshopQueue">Workshop Queue</span>
+        <span class="queue-badge" id="headerQueueBadge" style="display:none;">0</span>
+      </button>
+      <button type="button" class="btn-feedback-header" id="btnOpenFeedbackModal" title="Ask Questions & Share Workshop Thoughts">
+        <span class="feedback-icon">💬</span>
+        <span data-i18n="btnFeedback">Thoughts & Q&A</span>
+      </button>
+      <a href="https://instagram.com/madebynjood" target="_blank" rel="noopener noreferrer" class="btn-instagram-header" title="Follow @madebynjood on Instagram">
+        <span class="ig-icon">📸</span>
+        <span>@madebynjood</span>
+      </a>
+      <button type="button" class="btn-lang" id="langToggleBtn" data-i18n="langBtn">العربية</button>
+    </div>
+  </header>
+
+  <!-- Main Work Area -->
+  <main class="app-main">
+    
+    <!-- Left Sidebar: 3-Step Creative Workflow -->
+    <aside class="app-sidebar">
+      <div class="sidebar-scroll">
+
+        <!-- GLOBAL WORKSHOP PAPER ORIENTATION SELECTOR (HORIZONTAL VS VERTICAL) -->
+        <div class="orientation-bar-card">
+          <div class="orientation-bar-header">
+            <span class="orientation-bar-title" data-i18n="orientationTitle">📐 Poster Orientation</span>
+            <span class="orientation-bar-badge" id="badgeCurrentOrientation">Vertical (15.2 × 20.3 cm)</span>
+          </div>
+          <div class="orientation-btn-group">
+            <button type="button" class="btn-orientation-pill" data-orientation="landscape" id="btnOriLandscape" title="Horizontal Landscape (20.3 × 15.2 cm)">
+              <span class="ori-icon">↔️</span>
+              <div class="ori-info">
+                <span class="ori-name" data-i18n="oriLandscape">Horizontal</span>
+                <span class="ori-dim" data-i18n="oriLandscapeSub">20.3 × 15.2 cm (8×6")</span>
+              </div>
+            </button>
+            <button type="button" class="btn-orientation-pill active" data-orientation="portrait" id="btnOriPortrait" title="Vertical Portrait (15.2 × 20.3 cm)">
+              <span class="ori-icon">↕️</span>
+              <div class="ori-info">
+                <span class="ori-name" data-i18n="oriPortrait">Vertical</span>
+                <span class="ori-dim" data-i18n="oriPortraitSub">15.2 × 20.3 cm (6×8")</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB PANEL 1: TRANSFORM EXISTING POSTER -->
+        <div class="sidebar-tab-panel active" id="panelTransform">
+
+          <!-- STEP 1: UPLOAD / CHOOSE POSTER -->
+          <section class="step-card">
+            <div class="step-header-row">
+              <span class="step-title" data-i18n="step1Title">1. Choose or Drop Poster</span>
+              <span class="step-desc" data-i18n="step1Desc">Upload your poster design or choose a sample to start:</span>
+            </div>
+
+            <!-- Drag and Drop Zone -->
+            <div class="drop-zone" id="dropZone">
+              <input type="file" id="fileInput" accept="image/*" style="display:none;">
+              <span class="drop-zone-icon">🖼️</span>
+              <div class="drop-zone-text" data-i18n="dropTitle">Drop your poster image here</div>
+              <div class="drop-zone-sub" data-i18n="dropSub">or click to browse (JPG, PNG, WebP)</div>
+            </div>
+
+            <!-- Current Poster Thumbnail -->
+            <div class="poster-thumbnail" id="posterThumbnail">
+              <img id="thumbImg" alt="Poster Preview">
+            </div>
+
+            <!-- Built-in Sample Poster Chips -->
+            <div class="sample-chips-label">Or test with a sample poster:</div>
+            <div class="sample-chips-grid">
+              <button type="button" class="sample-chip active" data-sample="swiss" data-i18n="sampleSwiss">Swiss Typography</button>
+              <button type="button" class="sample-chip" data-sample="sculpture" data-i18n="sampleSculpture">Classical Statue</button>
+              <button type="button" class="sample-chip" data-sample="botanical" data-i18n="sampleBotanical">Botanical Riso</button>
+              <button type="button" class="sample-chip" data-sample="cyberpunk" data-i18n="sampleCyber">Cyber Club</button>
+              <button type="button" class="sample-chip" data-sample="brutalist" data-i18n="sampleBrutalist">Brutalist Arch</button>
+            </div>
+          </section>
+
+          <!-- STEP 2: PICK ALGORITHM -->
+          <section class="step-card">
+            <div class="step-header-row">
+              <span class="step-title" data-i18n="step2Title">2. Pick an Algorithm</span>
+              <span class="step-desc" data-i18n="step2Desc">Choose an experimental generative style inspired by contemporary poster art:</span>
+            </div>
+            <!-- Dynamically populated algorithm cards -->
+            <div class="algo-grid" id="algoGrid"></div>
+          </section>
+
+          <!-- STEP 3: VIBE PRESETS & CUSTOMIZE -->
+          <section class="step-card">
+            <div class="step-header-row">
+              <span class="step-title" data-i18n="step3Title">3. Quick Vibe & Plot</span>
+              <span class="step-desc" data-i18n="step3Desc">Pick a starter vibe, adjust 3 simple sliders, or tweak deep settings:</span>
+            </div>
+
+            <!-- Quick Vibe Presets -->
+            <div class="vibe-pills-row">
+              <button type="button" class="vibe-pill" data-vibe="fast" data-i18n="vibeFast">⚡ Fast Plot (~4m)</button>
+              <button type="button" class="vibe-pill" data-vibe="poster" data-i18n="vibePoster">🎯 Contemporary (~8m)</button>
+              <button type="button" class="vibe-pill active" data-vibe="watercolor" data-i18n="vibeWatercolor">🖌️ Chunky Marker (~4m)</button>
+              <button type="button" class="vibe-pill" data-vibe="duotone" data-i18n="vibeDuotone">🎨 Duotone Block (~9m)</button>
+              <button type="button" class="vibe-pill" data-vibe="tritone" data-i18n="vibeTritone">🌈 Riso 3-Trio (~14m)</button>
+            </div>
+
+            <!-- Workshop Color Mode (1, 2, or 3 Colors Max for Workshop Speed) -->
+            <div class="color-mode-section">
+              <div class="color-mode-header">
+                <span class="color-mode-title" data-i18n="colorModeTitle">🎨 Pen Colors (Workshop: 1–3 Max)</span>
+                <span class="color-mode-badge" id="colorModeBadge">2 Colors</span>
+              </div>
+              <div class="color-pills-row">
+                <button type="button" class="color-mode-btn" data-colors="1">
+                  <span class="color-mode-icon">🖊️</span>
+                  <span class="color-mode-text" data-i18n="pen1Mode">1 Pen</span>
+                  <span class="color-mode-sub" data-i18n="pen1Sub">Fastest · 0 Swaps</span>
+                </button>
+                <button type="button" class="color-mode-btn active" data-colors="2">
+                  <span class="color-mode-icon">🎨</span>
+                  <span class="color-mode-text" data-i18n="pen2Mode">2 Pens</span>
+                  <span class="color-mode-sub" data-i18n="pen2Sub">Duotone · 1 Swap</span>
+                </button>
+                <button type="button" class="color-mode-btn" data-colors="3">
+                  <span class="color-mode-icon">🌈</span>
+                  <span class="color-mode-text" data-i18n="pen3Mode">3 Pens</span>
+                  <span class="color-mode-sub" data-i18n="pen3Sub">Tritone · 2 Swaps</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 3-Tone ROYGV Marker Station (Black, Grey, White Tones) -->
+            <div class="roygv-station-card" id="roygvTransformStation">
+              <div class="roygv-station-header">
+                <div class="roygv-station-title-col">
+                  <span class="roygv-station-title" data-i18n="roygvStationTitle">🎨 3-Tone Marker Palette (ROYGV)</span>
+                  <span class="roygv-station-sub" data-i18n="roygvStationSub">Image converted into 3 tones (Black, Grey, White). Pick a marker for each:</span>
+                </div>
+              </div>
+
+              <!-- Tone 1: Deep Black / Shadows -->
+              <div class="tone-channel-card active" id="toneCard1" data-tone="1">
+                <div class="tone-header-line">
+                  <div class="tone-badge-group">
+                    <span class="tone-badge tone-1-badge" data-i18n="tone1Badge">Tone 1: Shadows (Black)</span>
+                    <span class="tone-detail" data-i18n="tone1Desc">Deepest darks & poster mass</span>
+                  </div>
+                  <span class="tone-active-color-name" id="tone1ColorName">Midnight Black</span>
+                </div>
+                <div class="roygv-swatches-grid" id="roygvGridTone1" data-tone="1"></div>
+              </div>
+
+              <!-- Tone 2: Midtones / Grey -->
+              <div class="tone-channel-card active" id="toneCard2" data-tone="2">
+                <div class="tone-header-line">
+                  <div class="tone-badge-group">
+                    <span class="tone-badge tone-2-badge" data-i18n="tone2Badge">Tone 2: Midtones (Grey)</span>
+                    <span class="tone-detail" data-i18n="tone2Desc">Medium shading & textures</span>
+                  </div>
+                  <span class="tone-active-color-name" id="tone2ColorName">Cobalt Blue</span>
+                </div>
+                <div class="roygv-swatches-grid" id="roygvGridTone2" data-tone="2"></div>
+              </div>
+
+              <!-- Tone 3: Highlights / White -->
+              <div class="tone-channel-card" id="toneCard3" data-tone="3">
+                <div class="tone-header-line">
+                  <div class="tone-badge-group">
+                    <span class="tone-badge tone-3-badge" data-i18n="tone3Badge">Tone 3: Highlights (White)</span>
+                    <span class="tone-detail" data-i18n="tone3Desc">Light accents & fine details</span>
+                  </div>
+                  <span class="tone-active-color-name" id="tone3ColorName">Crimson Red</span>
+                </div>
+                <div class="roygv-swatches-grid" id="roygvGridTone3" data-tone="3"></div>
+              </div>
+            </div>
+
+            <!-- Workshop Marker & Nib Tip Mode -->
+            <div class="nib-mode-section">
+              <div class="nib-mode-header">
+                <span class="nib-mode-title" data-i18n="nibModeTitle">🖌️ Pen / Marker Tip</span>
+                <span class="nib-mode-badge" id="nibModeBadge">Chunky Watercolor (2.8mm)</span>
+              </div>
+              <div class="nib-pills-row">
+                <button type="button" class="nib-mode-btn" data-nib="fine">
+                  <span class="nib-mode-icon">🖊️</span>
+                  <span class="nib-mode-text" data-i18n="nibFine">Fine Liner</span>
+                  <span class="nib-mode-sub">0.35mm · Hairline</span>
+                </button>
+                <button type="button" class="nib-mode-btn active" data-nib="chunky">
+                  <span class="nib-mode-icon">🖌️</span>
+                  <span class="nib-mode-text" data-i18n="nibChunky">Chunky Watercolor</span>
+                  <span class="nib-mode-sub">2.8mm · Big Chunks</span>
+                </button>
+                <button type="button" class="nib-mode-btn" data-nib="broad">
+                  <span class="nib-mode-icon">🖍️</span>
+                  <span class="nib-mode-text" data-i18n="nibBroad">Broad Posca</span>
+                  <span class="nib-mode-sub">5.0mm · Jumbo</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Slider 1: Detail Density -->
+            <div class="slider-group">
+              <div class="slider-label-row">
+                <span data-i18n="sliderDensity">Detail Density</span>
+              </div>
+              <div class="slider-hint" data-i18n="sliderDensityHint">Fewer lines (faster) ↔ Intricate detail</div>
+              <input type="range" id="sliderDensity" min="10" max="100" value="50">
+            </div>
+
+            <!-- Slider 2: Line Character / Wavy -->
+            <div class="slider-group">
+              <div class="slider-label-row">
+                <span data-i18n="sliderStyle">Line Character</span>
+              </div>
+              <div class="slider-hint" data-i18n="sliderStyleHint">Smooth gentle lines ↔ Expressive waveforms</div>
+              <input type="range" id="sliderIntensity" min="5" max="100" value="50">
+            </div>
+
+            <!-- Slider 3: Shadow Depth / Contrast -->
+            <div class="slider-group">
+              <div class="slider-label-row">
+                <span data-i18n="sliderDepth">Shadow Depth</span>
+              </div>
+              <div class="slider-hint" data-i18n="sliderDepthHint">Light delicate sketch ↔ Deep intense shading</div>
+              <input type="range" id="sliderDepth" min="10" max="100" value="50">
+            </div>
+
+            <!-- Advanced Collapsible Accordion -->
+            <button type="button" class="advanced-toggle" id="advancedToggle" data-i18n="advancedHeader">⚙️ Advanced Plotter Settings</button>
+            <div class="advanced-panel" id="advancedPanel">
+              
+              <div class="adv-row paper-size-container">
+                <span class="adv-label" data-i18n="paperSizeLabel">Paper Format:</span>
+                <div class="paper-locked-pill">
+                  <span>📐</span> <strong>15.2 × 20.3 cm (203 × 152 mm)</strong>
+                  <span class="paper-locked-tag">Workshop Fixed</span>
+                </div>
+                <select id="selectPaper" style="display:none;">
+                  <option value="a5" selected>15.2 × 20.3 cm / 6×8" (203 × 152 mm) - Workshop Standard</option>
+                  <option value="iso_a5">ISO A5 (210 × 148 mm Horizontal)</option>
+                  <option value="a4">ISO A4 (297 × 210 mm Horizontal)</option>
+                  <option value="a3">ISO A3 (420 × 297 mm Horizontal)</option>
+                  <option value="square">Square (200 × 200 mm)</option>
+                  <option value="postcard">Postcard (148 × 105 mm Horizontal)</option>
+                </select>
+              </div>
+
+              <div class="adv-row">
+                <span class="adv-label" data-i18n="paperStockLabel">Paper Stock:</span>
+                <select id="selectPaperStock">
+                  <option value="white" selected>Heavy White Bristol</option>
+                  <option value="cream">Warm Cream Moleskine</option>
+                  <option value="kraft">Natural Kraft Cardstock</option>
+                  <option value="charcoal">Midnight Charcoal Black</option>
+                  <option value="blueprint">Indigo Blueprint</option>
+                </select>
+              </div>
+
+              <div class="adv-row">
+                <span class="adv-label" data-i18n="penColorLabel">Pen & Ink Palette:</span>
+                <select id="selectPenTheme">
+                  <option value="watercolorTrio" selected>🖌️ Watercolor Trio: Cerulean + Coral + Ochre (3 Pens)</option>
+                  <option value="pastelWatercolor">🖌️ Soft Watercolor: Lavender + Mint + Peach (3 Pens)</option>
+                  <option value="earthWatercolor">🖌️ Earth Watercolor: Prussian Blue + Umber + Mustard (3 Pens)</option>
+                  <option value="poscaChunkyTrio">🖍️ Posca Chunky: Neon Pink + Cyan + Sunshine (3 Pens)</option>
+                  <option value="chunkyDuo">🖌️ Chunky Duo: Ultramarine + Tangerine (2 Pens)</option>
+                  <option value="sumiWashTrio">🖌️ Sumi Wash Trio: Charcoal + Warm Sepia + Vermilion (3 Pens)</option>
+                  <option value="dualNeonCoral">Black + Neon Coral (2 Pens)</option>
+                  <option value="risoTrio">Risograph Trio: Black + Fluo Pink + Federal Blue (3 Pens)</option>
+                  <option value="bauhausTrio">Bauhaus Primary: Black + Ultramarine + Warm Red (3 Pens)</option>
+                  <option value="cmyProcess">CMY Process: Cyan + Magenta + Yellow (3 Pens)</option>
+                  <option value="cyberTrio">Cyberpunk Neon: Plum + Electric Cyan + Acid Lime (3 Pens)</option>
+                  <option value="earthTrio">Nordic Earth: Slate + Terracotta + Olive Gold (3 Pens)</option>
+                  <option value="dualCyberCyan">Black + Electric Cyan (2 Pens)</option>
+                  <option value="dualGoldIndigo">Prussian Blue + Metallic Gold (2 Pens)</option>
+                  <option value="monoBlack">Sakura Micron Black (Single Pen)</option>
+                  <option value="metallicDarkTrio">Metallic Trio on Dark: White + Gold + Silver (3 Pens)</option>
+                  <option value="gelWhite">Gelly Roll White on Dark (Single Pen)</option>
+                </select>
+              </div>
+
+              <div class="adv-row">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span class="adv-label" data-i18n="marginLabel">Safe Margin:</span>
+                  <span class="adv-label" id="valMargin" style="color:var(--accent-cyan); font-family:monospace;">12 mm</span>
+                </div>
+                <input type="range" id="sliderMargin" min="5" max="30" value="12">
+              </div>
+
+              <label class="checkbox-row">
+                <input type="checkbox" id="checkInvert">
+                <span data-i18n="invertLabel">Invert (White ink on dark paper)</span>
+              </label>
+
+              <label class="checkbox-row">
+                <input type="checkbox" id="checkDualPen">
+                <span data-i18n="dualPenLabel">Split into 2 Pen Layers (Layer 1 + Layer 2)</span>
+              </label>
+
+              <button type="button" class="btn-seed" id="btnShuffleSeed" data-i18n="shuffleSeed">🎲 Shuffle Seed</button>
+            </div>
+
+          </section>
+
+        </div>
+        <!-- END TAB PANEL 1 -->
+
+        <!-- TAB PANEL 2: MAKE YOUR OWN POSTER (INTERACTIVE CANVAS) -->
+        <div class="sidebar-tab-panel" id="panelCustomPoster" style="display:none;">
+
+          <!-- STEP 1: ADD SHAPES & TEXT -->
+          <section class="step-card">
+            <div class="step-header-row">
+              <span class="step-title" data-i18n="customStep1Title">1. Add Shapes & Typography</span>
+              <span class="step-desc" data-i18n="customStep1Desc">Click any shape or text to place it onto your poster canvas:</span>
+            </div>
+
+            <!-- Shape Adding Grid -->
+            <div class="shape-add-grid">
+              <button type="button" class="btn-add-shape" data-shape="circle">
+                <span class="shape-icon">⭕</span>
+                <span class="shape-name" data-i18n="shapeCircle">Circle</span>
+              </button>
+              <button type="button" class="btn-add-shape" data-shape="arch">
+                <span class="shape-icon">🏛️</span>
+                <span class="shape-name" data-i18n="shapeArch">Arch</span>
+              </button>
+              <button type="button" class="btn-add-shape" data-shape="rect">
+                <span class="shape-icon">⬛</span>
+                <span class="shape-name" data-i18n="shapeRect">Block</span>
+              </button>
+              <button type="button" class="btn-add-shape" data-shape="triangle">
+                <span class="shape-icon">🔺</span>
+                <span class="shape-name" data-i18n="shapeTriangle">Triangle</span>
+              </button>
+              <button type="button" class="btn-add-shape" data-shape="squiggle">
+                <span class="shape-icon">〰️</span>
+                <span class="shape-name" data-i18n="shapeSquiggle">Squiggle</span>
+              </button>
+              <button type="button" class="btn-add-shape" data-shape="pill">
+                <span class="shape-icon">💊</span>
+                <span class="shape-name" data-i18n="shapePill">Capsule</span>
+              </button>
+              <button type="button" class="btn-add-shape" data-shape="halfMoon">
+                <span class="shape-icon">🌙</span>
+                <span class="shape-name" data-i18n="shapeHalfMoon">Half Moon</span>
+              </button>
+              <button type="button" class="btn-add-shape" data-shape="sunburst">
+                <span class="shape-icon">☀️</span>
+                <span class="shape-name" data-i18n="shapeSunburst">Sunburst</span>
+              </button>
+            </div>
+
+            <!-- Prominent Add Text Button -->
+            <button type="button" class="btn-add-text" id="btnAddText">
+              <span class="btn-add-text-icon">🔤</span>
+              <span data-i18n="btnAddText">Add Text / Typography</span>
+            </button>
+
+            <!-- Template / Reset helpers -->
+            <div class="custom-template-row">
+              <button type="button" class="btn-template-chip" id="btnStarterTemplate" data-i18n="btnStarterTemplate">✨ Starter Layout</button>
+              <button type="button" class="btn-template-chip danger" id="btnClearCanvas" data-i18n="btnClearCanvas">🗑️ Clear Canvas</button>
+            </div>
+          </section>
+
+          <!-- STEP 2: SELECTED ELEMENT PROPERTIES (DRAG, ROTATE, SCALE, COLOR) -->
+          <section class="step-card" id="cardElementProps">
+            <div class="step-header-row">
+              <span class="step-title" data-i18n="customStep2Title">2. Move, Rotate & Style</span>
+              <span class="step-desc" data-i18n="customStep2Desc">Drag elements on canvas, or tune precision controls below:</span>
+            </div>
+
+            <!-- Empty selection hint -->
+            <div class="no-selection-hint" id="noSelectionHint" data-i18n="noSelectionHint">
+              💡 Click any shape or text on the paper to move, rotate, resize, or recolor it.
+            </div>
+
+            <!-- Active element controls -->
+            <div class="element-props-box" id="elementPropsBox" style="display:none;">
+
+              <!-- Header showing element type -->
+              <div class="elem-header-row">
+                <span class="elem-type-badge" id="elemTypeBadge">Text</span>
+                <div class="elem-actions-mini">
+                  <button type="button" class="btn-mini-tool" id="btnBringForward" title="Bring to Front" data-i18n="btnForward">⬆️ Forward</button>
+                  <button type="button" class="btn-mini-tool" id="btnSendBackward" title="Send to Back" data-i18n="btnBackward">⬇️ Back</button>
+                  <button type="button" class="btn-mini-tool" id="btnDuplicateElem" title="Duplicate" data-i18n="btnClone">📋 Clone</button>
+                  <button type="button" class="btn-mini-tool danger" id="btnDeleteElem" title="Delete" data-i18n="btnDelete">🗑️ Delete</button>
+                </div>
+              </div>
+
+              <!-- Text Content input (visible if text selected) -->
+              <div class="input-field-group" id="groupTextContent" style="margin-top: 10px;">
+                <label for="propTextInput" data-i18n="propTextLabel">Text Content:</label>
+                <input type="text" id="propTextInput" maxlength="40" placeholder="Type words here...">
+              </div>
+
+              <!-- Pen Layer Picker (Pen 1, Pen 2, Pen 3) -->
+              <div class="color-mode-section" style="margin-top: 10px;">
+                <div class="color-mode-header">
+                  <span class="color-mode-title" data-i18n="propPenLayerLabel">Color Pen Layer</span>
+                  <span class="color-mode-badge" id="propPenBadge">Pen 1</span>
+                </div>
+                <div class="color-pills-row">
+                  <button type="button" class="color-mode-btn prop-pen-btn" data-pen="1">
+                    <span class="pen-pill-dot" id="dotPen1Preview" style="background:#111827;"></span>
+                    <span class="color-mode-text" id="lblPen1Preview">Pen 1</span>
+                  </button>
+                  <button type="button" class="color-mode-btn prop-pen-btn" data-pen="2">
+                    <span class="pen-pill-dot" id="dotPen2Preview" style="background:#0284c7;"></span>
+                    <span class="color-mode-text" id="lblPen2Preview">Pen 2</span>
+                  </button>
+                  <button type="button" class="color-mode-btn prop-pen-btn" data-pen="3">
+                    <span class="pen-pill-dot" id="dotPen3Preview" style="background:#e11d48;"></span>
+                    <span class="color-mode-text" id="lblPen3Preview">Pen 3</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Direct ROYGV Marker Recolor Swatches -->
+              <div class="elem-roygv-section" style="margin-top: 10px;">
+                <div class="color-mode-header">
+                  <span class="color-mode-title" data-i18n="elemRoygvTitle">🎨 Marker Color for Element</span>
+                  <span class="color-mode-badge" id="elemRoygvBadge">ROYGV</span>
+                </div>
+                <div class="elem-roygv-swatches-grid" id="elemRoygvSwatches"></div>
+              </div>
+
+              <!-- Fill vs Outline -->
+              <div class="fill-style-row" id="groupFillStyle">
+                <label class="fill-radio-label">
+                  <input type="radio" name="elemFill" value="fill" id="propFillHatch" checked>
+                  <span data-i18n="propHatchFill">Hatched Fill</span>
+                </label>
+                <label class="fill-radio-label">
+                  <input type="radio" name="elemFill" value="stroke" id="propFillOutline">
+                  <span data-i18n="propOutlineOnly">Outline Only</span>
+                </label>
+              </div>
+
+              <!-- Rotation Slider & Quick Angles -->
+              <div class="slider-group" style="margin-top: 12px;">
+                <div class="slider-label-row">
+                  <span data-i18n="propRotateLabel">Rotation Angle</span>
+                  <span class="slider-val-badge" id="valPropAngle">0°</span>
+                </div>
+                <input type="range" id="propSliderAngle" min="-180" max="180" value="0">
+                <div class="quick-angles-row">
+                  <button type="button" class="btn-angle-chip" data-angle="0">0°</button>
+                  <button type="button" class="btn-angle-chip" data-angle="45">45°</button>
+                  <button type="button" class="btn-angle-chip" data-angle="90">90°</button>
+                  <button type="button" class="btn-angle-chip" data-angle="-45">-45°</button>
+                  <button type="button" class="btn-angle-chip" data-angle="180">180°</button>
+                </div>
+              </div>
+
+              <!-- Size Slider -->
+              <div class="slider-group" style="margin-top: 10px;">
+                <div class="slider-label-row">
+                  <span id="propSizeLabel" data-i18n="propSizeLabel">Element Size</span>
+                  <span class="slider-val-badge" id="valPropSize">50mm</span>
+                </div>
+                <input type="range" id="propSliderSize" min="10" max="130" value="50">
+              </div>
+
+            </div>
+          </section>
+
+          <!-- STEP 3: WORKSHOP PALETTE & MARKERS -->
+          <section class="step-card">
+            <div class="step-header-row">
+              <span class="step-title" data-i18n="customStep3Title">3. Workshop Palette & Markers</span>
+              <span class="step-desc" data-i18n="customStep3Desc">Choose pen inks and marker tip for your poster:</span>
+            </div>
+
+            <!-- 3 Workshop Markers for Custom Posters -->
+            <div class="roygv-station-card" id="roygvCustomStation" style="margin-bottom: 14px;">
+              <div class="roygv-station-header">
+                <div class="roygv-station-title-col">
+                  <span class="roygv-station-title" data-i18n="roygvCustomTitle">🎨 3 Workshop Pen Markers (ROYGV)</span>
+                  <span class="roygv-station-sub" data-i18n="roygvCustomSub">Pick physical marker colors for Pen 1, Pen 2, and Pen 3:</span>
+                </div>
+              </div>
+
+              <!-- Pen 1 -->
+              <div class="tone-channel-card active" data-custom-pen="1">
+                <div class="tone-header-line">
+                  <div class="tone-badge-group">
+                    <span class="tone-badge tone-1-badge" data-i18n="customPen1Badge">Pen 1 (Primary)</span>
+                  </div>
+                  <span class="tone-active-color-name" id="customPen1ColorName">Midnight Black</span>
+                </div>
+                <div class="roygv-swatches-grid" id="customRoygvGridPen1" data-custom-pen="1"></div>
+              </div>
+
+              <!-- Pen 2 -->
+              <div class="tone-channel-card active" data-custom-pen="2">
+                <div class="tone-header-line">
+                  <div class="tone-badge-group">
+                    <span class="tone-badge tone-2-badge" data-i18n="customPen2Badge">Pen 2 (Accent)</span>
+                  </div>
+                  <span class="tone-active-color-name" id="customPen2ColorName">Cobalt Blue</span>
+                </div>
+                <div class="roygv-swatches-grid" id="customRoygvGridPen2" data-custom-pen="2"></div>
+              </div>
+
+              <!-- Pen 3 -->
+              <div class="tone-channel-card" data-custom-pen="3">
+                <div class="tone-header-line">
+                  <div class="tone-badge-group">
+                    <span class="tone-badge tone-3-badge" data-i18n="customPen3Badge">Pen 3 (Highlight)</span>
+                  </div>
+                  <span class="tone-active-color-name" id="customPen3ColorName">Crimson Red</span>
+                </div>
+                <div class="roygv-swatches-grid" id="customRoygvGridPen3" data-custom-pen="3"></div>
+              </div>
+            </div>
+
+            <!-- Workshop Marker & Nib Tip Mode -->
+            <div class="nib-mode-section">
+              <div class="nib-mode-header">
+                <span class="nib-mode-title" data-i18n="nibModeTitle">🖌️ Pen / Marker Tip</span>
+                <span class="nib-mode-badge" id="customNibBadge">Chunky Watercolor (2.8mm)</span>
+              </div>
+              <div class="nib-pills-row">
+                <button type="button" class="nib-mode-btn custom-nib-btn" data-nib="fine">
+                  <span class="nib-mode-icon">🖊️</span>
+                  <span class="nib-mode-text" data-i18n="nibFine">Fine Liner</span>
+                  <span class="nib-mode-sub">0.35mm · Hairline</span>
+                </button>
+                <button type="button" class="nib-mode-btn custom-nib-btn active" data-nib="chunky">
+                  <span class="nib-mode-icon">🖌️</span>
+                  <span class="nib-mode-text" data-i18n="nibChunky">Chunky Watercolor</span>
+                  <span class="nib-mode-sub">2.8mm · Big Chunks</span>
+                </button>
+                <button type="button" class="nib-mode-btn custom-nib-btn" data-nib="broad">
+                  <span class="nib-mode-icon">🖍️</span>
+                  <span class="nib-mode-text" data-i18n="nibBroad">Broad Posca</span>
+                  <span class="nib-mode-sub">5.0mm · Jumbo</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Action Buttons for Custom Poster -->
+            <div class="bauhaus-actions-card">
+              <button type="button" class="btn-bauhaus-primary" id="btnPlotCustom">
+                <span class="btn-icon">🖋️</span>
+                <span data-i18n="btnPlotCustom">Plot This Poster</span>
+              </button>
+              <button type="button" class="btn-bauhaus-secondary" id="btnSendToAlgos">
+                <span class="btn-icon">🔄</span>
+                <span data-i18n="btnSendToAlgos">Filter with 14 Algos</span>
+              </button>
+            </div>
+
+          </section>
+
+        </div>
+        <!-- END TAB PANEL 2 -->
+
+      </div>
+
+      <!-- Sidebar Footer: Primary Workshop Action & Secondary Exports -->
+      <div class="sidebar-footer">
+        <button type="button" class="btn-submit-plotter" id="btnOpenSubmitModal" data-i18n="btnSubmitPlotter">
+          <span>🚀</span> <span data-i18n="btnSubmitPlotterLabel">Send to Workshop Plotter</span>
+        </button>
+        <div class="export-participant-row">
+          <button type="button" class="btn-export-secondary btn-save-png" id="btnExportPng" data-i18n="btnExportPng" title="Save Image (PNG)">
+            🖼️ Save Image (PNG)
+          </button>
+        </div>
+        <div class="export-secondary-row operator-only" style="display:none; gap:6px;">
+          <button type="button" class="btn-export-secondary" id="btnExportSvg" data-i18n="btnExportSvg" title="Download Standard Vector SVG">
+            📥 SVG
+          </button>
+          <button type="button" class="btn-export-gcode" id="btnExportGcode" title="Download Regular (1:1) OpenBuilds G-Code">
+            ⚡ Regular (1:1)
+          </button>
+          <button type="button" class="btn-export-gcode" id="btnExportGcodeWide" style="background:linear-gradient(135deg, #0284c7, #2563eb); border:1px solid #38bdf8;" title="Download Compensate Squish (+28% Wide) G-Code">
+            ↔️ Wide (+28%)
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Area: Interactive Paper Canvas & Simulation -->
+    <section class="canvas-viewport" id="canvasViewport">
+
+      <!-- View Mode Toggle Bar (Graphic Poster View vs Plotter Vector Paths) -->
+      <div class="view-mode-bar" id="viewModeBar" style="display:none;">
+        <button type="button" class="view-mode-btn active" id="viewModeGraphic" data-mode="graphic" data-i18n="viewModeGraphic">🎨 Poster Art</button>
+        <button type="button" class="view-mode-btn" id="viewModePlotter" data-mode="plotter" data-i18n="viewModePlotter">🖋️ Plotter Paths</button>
+      </div>
+
+      <!-- Floating Top Stats Bar -->
+      <div class="viewport-top-bar">
+        <div class="stat-pill" id="statTimeVal">⏱️ --</div>
+        <div class="stat-pill" id="statLiftsVal">⚡ -- lifts</div>
+        <div class="stat-pill" id="statDistVal">📏 --m</div>
+        <div class="layer-legend-bar" id="layerLegendBar"></div>
+        <div class="stat-pill safe-pill" data-i18n="badgeSafe">✓ Plotter Safe</div>
+      </div>
+
+      <!-- Main Canvas Element -->
+      <canvas id="plotterCanvas"></canvas>
+
+      <!-- Floating Bottom Simulator Toolbar -->
+      <div class="viewport-bottom-bar">
+        <button type="button" class="btn-sim-play" id="btnSimulate">
+          <span>▶️</span> <span data-i18n="btnSimulate">Watch Plotter Draw</span>
+        </button>
+        <button type="button" class="btn-sim-reset" id="btnResetSim" title="Reset Simulation">⏮️</button>
+        <div class="sim-scrub-wrap">
+          <input type="range" id="simScrubSlider" min="0" max="100" value="0">
+        </div>
+        <div class="sim-speed-wrap">
+          <span>Speed:</span>
+          <input type="range" id="simSpeedSlider" min="1" max="40" value="10">
+          <span id="valSpeed" style="font-family:monospace; min-width:24px;">10x</span>
+        </div>
+      </div>
+
+      <!-- Floating Zoom Controls (Bottom Right) -->
+      <div class="zoom-controls">
+        <button type="button" class="btn-zoom" id="btnZoomFit" data-i18n="zoomFit">Fit</button>
+        <button type="button" class="btn-zoom" id="btnZoomIn" data-i18n="zoomIn">+</button>
+        <button type="button" class="btn-zoom" id="btnZoomOut" data-i18n="zoomOut">-</button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 1: PARTICIPANT SUBMISSION TO PLOTTER QUEUE               -->
+  <!-- ============================================================== -->
+  <div class="modal-backdrop" id="modalSubmitBackdrop" style="display:none;">
+    <div class="modal-dialog modal-submit-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-badge-icon">📤</span>
+          <div>
+            <h3 class="modal-title" data-i18n="modalSubmitTitle">Send to Workshop Plotter</h3>
+            <p class="modal-sub" data-i18n="modalSubmitSub">Submit your poster to the live drawing queue with calibrated machine coordinates.</p>
+          </div>
+        </div>
+        <button type="button" class="btn-modal-close" id="btnCloseSubmitModal" aria-label="Close">✕</button>
+      </div>
+
+      <div class="modal-body" id="submitFormBody">
+        <div class="form-group">
+          <label for="inputParticipantName" data-i18n="lblParticipantName">Your Name / الاسم:</label>
+          <input type="text" id="inputParticipantName" class="form-input" placeholder="e.g. Sarah / سارة" autocomplete="off" required>
+        </div>
+
+        <!-- Live Machine & Job Specifications Card -->
+        <div class="submit-spec-card">
+          <div class="spec-header" data-i18n="specHeader">Standardized Machine Calibration</div>
+          <div class="spec-grid">
+            <div class="spec-item">
+              <span class="spec-label" data-i18n="specPaper">Paper Size:</span>
+              <span class="spec-val" id="submitSpecPaper">A4 (210×297mm)</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label" data-i18n="specPens">Pen Layers:</span>
+              <span class="spec-val" id="submitSpecPens">2 Pens</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label" data-i18n="specTime">Est. Draw Time:</span>
+              <span class="spec-val" id="submitSpecTime">~4m 12s</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label" data-i18n="specLifts">Pen Lifts:</span>
+              <span class="spec-val" id="submitSpecLifts">⚡ 2 lifts</span>
+            </div>
+          </div>
+          <div class="spec-colors-row" id="submitSpecColorsRow"></div>
+          <div class="spec-calibration-badge">
+            <span>✓</span> <span data-i18n="specCalibrated">1:1 Physical Scale · Bottom-Left Origin · OpenBuilds Calibrated</span>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-submit-action" id="btnConfirmSubmit">
+            <span>🚀</span> <span data-i18n="btnConfirmSubmit">Submit Poster to Queue</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Submission Success State (Participant-Friendly, Zero Clutter) -->
+      <div class="modal-body modal-success-state" id="submitSuccessBody" style="display:none;">
+        <div class="success-icon-bubble">🎉</div>
+        <h3 class="success-title" data-i18n="successTitle">Poster Sent to the Workshop Plotter!</h3>
+        <p class="success-desc">
+          <span data-i18n="successGreeting">Thank you,</span> <strong class="queue-num-highlight" id="successParticipantNameDisplay">Sarah</strong>!
+        </p>
+        <div class="success-card-simple">
+          <div class="success-pill-row">
+            <span class="success-chip">📐 15.2 × 20.3 cm (6×8")</span>
+            <span class="success-chip" id="successQueuePosBadge">Queue Position #1</span>
+          </div>
+          <p class="success-note" data-i18n="successDesc">
+            Your poster has been added to the drawing queue. The instructor will call your name when your paper is placed on the machine!
+          </p>
+        </div>
+        <button type="button" class="btn-modal-done" id="btnDoneSubmitModal" data-i18n="btnDone">Done / Back to Studio</button>
+
+        <!-- Workshop Thoughts & Instagram Prompt -->
+        <div class="feedback-cta-card" style="margin-top: 14px; padding: 12px 14px; background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 12px; text-align: center;">
+          <p style="margin: 0 0 10px 0; font-size: 13px; color: #cbd5e1;" data-i18n="feedbackCta">
+            Have questions for Njood or thoughts to share about the workshop?
+          </p>
+          <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+            <button type="button" class="btn-open-feedback-action" id="btnSuccessOpenFeedback" style="display:inline-flex; align-items:center; gap:6px; background:#a855f7; color:#fff; border:none; padding:7px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+              <span>💬</span> <span data-i18n="btnShareThoughts">Share Thoughts / Ask Question</span>
+            </button>
+            <a href="https://instagram.com/madebynjood" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, #ec4899, #f43f5e); color:#fff; text-decoration:none; padding:7px 14px; border-radius:8px; font-size:12px; font-weight:700;">
+              <span>📸</span> <span>Follow @madebynjood</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: PARTICIPANT THOUGHTS & Q&A                             -->
+  <!-- ============================================================== -->
+  <div class="modal-backdrop" id="modalFeedbackBackdrop" style="display:none;">
+    <div class="modal-dialog modal-feedback-dialog" style="max-width: 490px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-badge-icon" style="background: rgba(168, 85, 247, 0.2); border: 1px solid rgba(168, 85, 247, 0.5); color: #c084fc;">💬</span>
+          <div>
+            <h3 class="modal-title" data-i18n="modalFeedbackTitle">Thoughts & Questions</h3>
+            <p class="modal-sub" data-i18n="modalFeedbackSub">Ask Njood a question or share your impressions of the plotter workshop!</p>
+          </div>
+        </div>
+        <button type="button" class="btn-modal-close" id="btnCloseFeedbackModal" aria-label="Close">✕</button>
+      </div>
+
+      <!-- Instagram Spotlight Banner -->
+      <a href="https://instagram.com/madebynjood" target="_blank" rel="noopener noreferrer" class="ig-spotlight-card" style="display:flex; align-items:center; justify-content:space-between; margin:16px 20px 0 20px; padding:12px 16px; background:linear-gradient(135deg, rgba(236,72,153,0.18), rgba(244,63,94,0.12)); border:1px solid rgba(244,63,94,0.35); border-radius:12px; text-decoration:none; color:#f8fafc; transition:all 0.2s;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:24px;">📸</span>
+          <div>
+            <div style="font-size:13px; font-weight:700; color:#f472b6;">Follow on Instagram: @madebynjood</div>
+            <div style="font-size:11px; color:#94a3b8;" data-i18n="igFollowSub">Tag your plotted posters & stay in touch!</div>
+          </div>
+        </div>
+        <span style="font-size:12px; font-weight:700; color:#fff; background:linear-gradient(135deg,#ec4899,#f43f5e); padding:5px 12px; border-radius:20px;">Follow ↗</span>
+      </a>
+
+      <!-- Form Body -->
+      <div class="modal-body" id="feedbackFormBody">
+        <div class="form-group">
+          <label for="inputFeedbackName" data-i18n="lblFeedbackName">Your Name / الاسم (Optional):</label>
+          <input type="text" id="inputFeedbackName" class="form-input" placeholder="e.g. Sarah / سارة" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="lblFeedbackType">What would you like to share? / ماذا تود أن تشارك؟</label>
+          <div style="display:flex; gap:8px;">
+            <label style="flex:1; display:flex; align-items:center; gap:6px; background:#1e293b; border:1px solid #334155; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; color:#e2e8f0;">
+              <input type="radio" name="feedbackType" value="thoughts" checked style="accent-color:#a855f7;">
+              <span data-i18n="typeThoughts">💭 Workshop Thoughts</span>
+            </label>
+            <label style="flex:1; display:flex; align-items:center; gap:6px; background:#1e293b; border:1px solid #334155; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; color:#e2e8f0;">
+              <input type="radio" name="feedbackType" value="question" style="accent-color:#06b6d4;">
+              <span data-i18n="typeQuestion">❓ Question for Njood</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="inputFeedbackMessage" data-i18n="lblFeedbackMessage">Your Message / رسالتك:</label>
+          <textarea id="inputFeedbackMessage" class="form-input" rows="4" placeholder="Write your thoughts, ideas, or questions here..." style="resize:vertical; min-height:85px;" required></textarea>
+        </div>
+
+        <div class="modal-actions" style="margin-top:16px;">
+          <button type="button" class="btn-submit-action" id="btnSubmitFeedback" style="background:linear-gradient(135deg, #a855f7, #7c3aed);">
+            <span>🚀</span> <span data-i18n="btnSubmitFeedback">Send Message / إرسال</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Feedback Success View -->
+      <div class="modal-body modal-success-state" id="feedbackSuccessBody" style="display:none; text-align:center; padding:30px 20px;">
+        <div class="success-icon-bubble" style="background:rgba(168,85,247,0.2); border:1px solid rgba(168,85,247,0.5); font-size:36px; margin:0 auto 14px auto;">💌</div>
+        <h3 class="success-title" data-i18n="feedbackSuccessTitle">Message Received!</h3>
+        <p class="success-desc" data-i18n="feedbackSuccessDesc" style="max-width:360px; margin:0 auto 16px auto; font-size:13px; color:#94a3b8;">
+          Thank you for sharing your thoughts with Njood! Feel free to tag your poster prints on Instagram:
+        </p>
+        <a href="https://instagram.com/madebynjood" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg, #ec4899, #f43f5e); color:#fff; text-decoration:none; padding:10px 22px; border-radius:24px; font-weight:700; font-size:14px; box-shadow:0 4px 15px rgba(244,63,94,0.3); margin-bottom:18px;">
+          <span>📸</span> <span>Open Instagram @madebynjood</span>
+        </a>
+        <div>
+          <button type="button" class="btn-modal-done" id="btnDoneFeedbackModal" data-i18n="btnDone">Back to Studio</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 2: INSTRUCTOR WORKSHOP OPERATOR DASHBOARD                -->
+  <!-- ============================================================== -->
+  <div class="modal-backdrop" id="modalWorkshopBackdrop" style="display:none;">
+    <div class="modal-dialog modal-operator-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-badge-icon">📋</span>
+          <div>
+            <h3 class="modal-title" data-i18n="modalOperatorTitle">Workshop Operator & Machine Setup</h3>
+            <p class="modal-sub" data-i18n="modalOperatorSub">Zero-recalibration OpenBuilds workflow: calibrate your corner jig once, then just swap pens and paper!</p>
+          </div>
+        </div>
+        <button type="button" class="btn-modal-close" id="btnCloseWorkshopModal" aria-label="Close">✕</button>
+      </div>
+
+      <!-- Operator Tabs Navigation -->
+      <div class="operator-tab-bar">
+        <button type="button" class="operator-tab-btn active" data-optab="queue" id="btnOpTabQueue">
+          <span>📋</span> <span data-i18n="opTabQueue">Live Queue</span> <span class="op-tab-badge" id="opTabQueueBadge">0</span>
+        </button>
+        <button type="button" class="operator-tab-btn" data-optab="calibration" id="btnOpTabCalib">
+          <span>📐</span> <span data-i18n="opTabCalibration">Machine Jig Calibration</span>
+        </button>
+        <button type="button" class="operator-tab-btn" data-optab="share" id="btnOpTabShare">
+          <span>📲</span> <span data-i18n="opTabShare">Wi-Fi & QR Share</span>
+        </button>
+        <button type="button" class="operator-tab-btn" data-optab="feedback" id="btnOpTabFeedback">
+          <span>💬</span> <span data-i18n="opTabFeedback">Thoughts & Q&A</span> <span class="op-tab-badge" id="opTabFeedbackBadge">0</span>
+        </button>
+      </div>
+
+      <!-- OPERATOR TAB 1: LIVE QUEUE -->
+      <div class="operator-panel active" id="opPanelQueue">
+        <div class="queue-toolbar">
+          <div class="queue-stats">
+            <span id="queueStatPending">⏳ 0 Pending</span>
+            <span id="queueStatCompleted">✓ 0 Completed</span>
+          </div>
+          <!-- Operator Download Aspect Toggle (Regular vs Squished/Compensated) -->
+          <div class="queue-aspect-toggle" style="display:flex; align-items:center; gap:6px; background:#1e293b; padding:3px 8px; border-radius:8px; border:1px solid #334155;">
+            <span style="font-size:11px; font-weight:600; color:#94a3b8;">Format:</span>
+            <button type="button" class="btn-queue-aspect active" id="btnQueueAspectNormal" data-aspect="normal" style="padding:4px 9px; font-size:11px; font-weight:600; border-radius:6px; border:none; cursor:pointer; background:#0284c7; color:#fff;">
+              📐 Regular (1:1)
+            </button>
+            <button type="button" class="btn-queue-aspect" id="btnQueueAspectWide" data-aspect="wide" style="padding:4px 9px; font-size:11px; font-weight:600; border-radius:6px; border:none; cursor:pointer; background:#334155; color:#94a3b8;">
+              ↔️ Squished Fix (+28% Wide)
+            </button>
+          </div>
+          <div class="queue-tools">
+            <label class="btn-import-file" title="Import offline participant files (.json or .gcode)">
+              <span>📥 Import File</span>
+              <input type="file" id="inputImportJobFile" accept=".json,.gcode,.svg" style="display:none;">
+            </label>
+            <button type="button" class="btn-clear-queue" id="btnClearCompletedQueue" title="Clear completed plots">
+              🗑️ Clear Done
+            </button>
+          </div>
+        </div>
+
+        <div class="job-list-container" id="jobListContainer">
+          <!-- Dynamically populated job cards or empty state -->
+          <div class="queue-empty-state" id="queueEmptyState">
+            <div class="empty-icon">📭</div>
+            <h4 data-i18n="queueEmptyTitle">No Posters in Queue Yet</h4>
+            <p data-i18n="queueEmptySub">Participants can click "Send to Workshop Plotter" on their devices to submit their designs.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPERATOR TAB 2: MACHINE CALIBRATION & JIG -->
+      <div class="operator-panel" id="opPanelCalibration" style="display:none;">
+        <div class="calib-banner">
+          <div class="calib-banner-icon">💡</div>
+          <div class="calib-banner-text">
+            <strong>The Zero-Recalibration Workshop Method:</strong>
+            Tape an L-shaped corner guide on your plotter bed at machine (0,0). Each participant's paper pushes into this exact corner, so you never have to adjust home or calibrate between plots!
+          </div>
+        </div>
+
+        <div class="calib-grid">
+          <!-- Left: Calibration Controls -->
+          <div class="calib-col">
+            <h4 class="calib-section-title">1. Physical Paper & Margin Lock</h4>
+            
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Workshop Paper Size:</label>
+                <select id="opPaperSize" class="form-input">
+                  <option value="a5" selected>15.2 × 20.3 cm / 6×8" (Workshop Standard)</option>
+                  <option value="iso_a5">ISO A5 (210 × 148 mm)</option>
+                  <option value="a4">ISO A4 (297 × 210 mm)</option>
+                  <option value="a3">ISO A3 (420 × 297 mm)</option>
+                </select>
+              </div>
+              <div class="form-group flex-1">
+                <label>Paper Orientation:</label>
+                <select id="opPaperOrientation" class="form-input">
+                  <option value="landscape" selected>↔️ Horizontal (8×6")</option>
+                  <option value="portrait">↕️ Vertical (6×8")</option>
+                </select>
+              </div>
+              <div class="form-group" style="width:105px;">
+                <label>Margin (mm):</label>
+                <input type="number" id="opPaperMargin" class="form-input" value="12" min="5" max="40">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Max Pens Allowed:</label>
+                <select id="opMaxPens" class="form-input">
+                  <option value="1">1 Pen (Fastest · 0 Swaps)</option>
+                  <option value="2" selected>2 Pens (Duotone · 1 Swap)</option>
+                  <option value="3">3 Pens (Tritone · 2 Swaps)</option>
+                </select>
+              </div>
+              <div class="form-group flex-1">
+                <label>Marker Preset:</label>
+                <select id="opMarkerType" class="form-input">
+                  <option value="chunky" selected>Chunky Watercolor (2.8mm)</option>
+                  <option value="broad">Broad Posca (5.0mm)</option>
+                  <option value="fine">Fine Liner (0.35mm)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Shape Width / Machine Aspect Mode:</label>
+                <select id="opAspectMode" class="form-input">
+                  <option value="normal" selected>Normal (1:1 Exact Standard)</option>
+                  <option value="wide">Compensate Squish (+28% Wider Expansion)</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="button" class="btn-lock-settings" id="btnSaveAndLockConfig">
+              🔒 Lock Settings for All Participants
+            </button>
+            <p class="field-hint">When locked, connected participant screens will automatically update to match this exact paper and pen limit.</p>
+          </div>
+
+          <!-- Right: OpenBuilds G-Code Hardware Setup -->
+          <div class="calib-col">
+            <h4 class="calib-section-title">2. OpenBuilds CONTROL Settings</h4>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Machine Origin:</label>
+                <select id="opMachineOrigin" class="form-input">
+                  <option value="bottom_left" selected>Bottom-Left (0,0) [OpenBuilds/CNC]</option>
+                  <option value="top_left">Top-Left (0,0) [Laser/SVG]</option>
+                </select>
+              </div>
+              <div class="form-group flex-1">
+                <label>Pen Actuation:</label>
+                <select id="opPenActuation" class="form-input">
+                  <option value="servo_pwm" selected>Servo PWM (M3 / M5)</option>
+                  <option value="z_stepper">Z-Axis Stepper (G0 Z5 / G1 Z0)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Servo Down Pressure & Angle Settings -->
+            <div class="servo-pressure-card" id="groupServoPressure">
+              <div class="servo-pressure-header">
+                <span class="servo-pressure-title">🎛️ Pen Down Pressure / Servo Angle (S-Value)</span>
+                <span class="servo-pressure-val-badge" id="valPenDownS">S500 (Balanced)</span>
+              </div>
+              <p class="field-hint" style="margin-top:2px; margin-bottom:8px;">
+                Controls how far the servo rotates down. Lower S = lighter touch (prevents crushing pen and protects servo from overheating).
+              </p>
+              <div class="servo-pressure-slider-row">
+                <input type="range" id="opPenDownSlider" min="200" max="900" step="25" value="500" class="pressure-slider">
+                <input type="number" id="opPenDownS" class="form-input pressure-num-input" value="500" min="150" max="1000" step="25">
+              </div>
+              <div class="servo-preset-pills">
+                <button type="button" class="btn-pressure-preset" data-s="350">🪶 Gentle (S350)</button>
+                <button type="button" class="btn-pressure-preset active" data-s="500">🖌️ Medium (S500)</button>
+                <button type="button" class="btn-pressure-preset" data-s="650">🖍️ Firm (S650)</button>
+                <button type="button" class="btn-pressure-preset" data-s="800">💪 Heavy (S800)</button>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label>Draw Speed (mm/min):</label>
+                <input type="number" id="opFeedDraw" class="form-input" value="2200" step="200">
+              </div>
+              <div class="form-group flex-1">
+                <label>Travel Speed (mm/min):</label>
+                <input type="number" id="opFeedTravel" class="form-input" value="3500" step="500">
+              </div>
+            </div>
+
+            <!-- Test 1: Corner Test -->
+            <div class="corner-test-box">
+              <div class="corner-test-header">
+                <strong>📐 Pre-Plot Corner Verification Test</strong>
+                <span class="test-badge-time">10-Second Test</span>
+              </div>
+              <p class="corner-test-desc">
+                Hovers the pen 5mm UP over the 4 physical sheet corners and 4 inner safe margin corners. Run once with a blank sheet in the jig to verify paper alignment!
+              </p>
+              <div class="calib-btn-row">
+                <button type="button" class="btn-corner-test" id="btnDownloadCornerTestGcode">
+                  ⚡ Download Corner Test (G-Code)
+                </button>
+                <button type="button" class="btn-copy-test-code" id="btnCopyCornerTestGcode" title="Copy G-Code to clipboard">
+                  📋 Copy G-Code
+                </button>
+              </div>
+            </div>
+
+            <!-- Test 2: Pen Up / Pen Down Calibration Test -->
+            <div class="corner-test-box pen-calib-box">
+              <div class="corner-test-header">
+                <strong>🖊️ Pen Up / Pen Down Calibration Test</strong>
+                <span class="test-badge-time">30-Second Test</span>
+              </div>
+              <p class="corner-test-desc">
+                Tests static nib pressure (3s hold), 3-5mm clearance gap (2s hold), 3 travel gap lines (checks for ink dragging), 4 staccato tap dots (servo timing), and a hatched box with crosshair. Ultra low-frequency lifts to keep your servo cool!
+              </p>
+              <div class="calib-btn-row">
+                <button type="button" class="btn-corner-test btn-pen-test" id="btnDownloadPenTestGcode">
+                  ⚡ Download Pen Up/Down Test (G-Code)
+                </button>
+                <button type="button" class="btn-copy-test-code" id="btnCopyPenTestGcode" title="Copy G-Code to clipboard">
+                  📋 Copy G-Code
+                </button>
+              </div>
+            </div>
+
+            <!-- Test 3: Pen Down Pressure Ladder Test (Step Test) -->
+            <div class="corner-test-box ladder-calib-box">
+              <div class="corner-test-header">
+                <strong>🪜 Pen Down Pressure Ladder Test (Step Test)</strong>
+                <span class="test-badge-time">15-Second Test</span>
+              </div>
+              <p class="corner-test-desc">
+                Draws 5 test lines with increasing downward angles: S300, S450, S600, S750, S900. Run this to find your machine's exact ideal S-value without crushing your pen!
+              </p>
+              <div class="calib-btn-row">
+                <button type="button" class="btn-corner-test btn-ladder-test" id="btnDownloadLadderTestGcode">
+                  ⚡ Download Pressure Ladder Test (G-Code)
+                </button>
+                <button type="button" class="btn-copy-test-code" id="btnCopyLadderTestGcode" title="Copy G-Code to clipboard">
+                  📋 Copy G-Code
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- OPERATOR TAB 3: WI-FI & QR SHARE -->
+      <div class="operator-panel" id="opPanelShare" style="display:none;">
+        <div class="share-flex-wrap">
+          <div class="qr-preview-box">
+            <div id="qrCodeContainer" class="qr-render-area">
+              <!-- SVG QR Code rendered here -->
+            </div>
+            <button type="button" class="btn-fullscreen-qr" id="btnFullscreenQr">
+              🖥️ Projector Fullscreen Mode
+            </button>
+          </div>
+
+          <div class="share-info-box">
+            <h4>📲 Connect Participants to Poster Plotter Studio</h4>
+            <p>Ensure participants are on the same local workshop Wi-Fi network.</p>
+
+            <div class="share-url-row">
+              <input type="text" id="shareUrlInput" class="share-url-input" readonly value="http://localhost:8080">
+              <button type="button" class="btn-copy-url" id="btnCopyShareUrl">📋 Copy URL</button>
+            </div>
+
+            <div class="instructions-steps">
+              <div class="inst-step">
+                <span class="inst-num">1</span>
+                <span>Connect your device to the workshop Wi-Fi.</span>
+              </div>
+              <div class="inst-step">
+                <span class="inst-num">2</span>
+                <span>Scan the QR code with phone / iPad camera or type the URL above.</span>
+              </div>
+              <div class="inst-step">
+                <span class="inst-num">3</span>
+                <span>Create or transform your poster design.</span>
+              </div>
+              <div class="inst-step">
+                <span class="inst-num">4</span>
+                <span>Click <strong>"Send to Workshop Plotter"</strong> and type your name!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPERATOR TAB 4: THOUGHTS & Q&A -->
+      <div class="operator-panel" id="opPanelFeedback" style="display:none;">
+        <div class="queue-toolbar">
+          <div class="queue-stats">
+            <span id="feedbackStatTotal">💬 0 Total Messages</span>
+            <span id="feedbackStatQuestions" style="color:#38bdf8;">❓ 0 Questions</span>
+            <span id="feedbackStatThoughts" style="color:#c084fc;">💭 0 Thoughts</span>
+          </div>
+          <div class="queue-tools">
+            <button type="button" class="btn-clear-queue" id="btnClearFeedback" title="Clear feedback messages">
+              🗑️ Clear Messages
+            </button>
+          </div>
+        </div>
+        <div class="job-list-container" id="feedbackListContainer" style="max-height: 440px; overflow-y: auto; padding: 10px 0;">
+          <div class="queue-empty-state" id="feedbackEmptyState">
+            <div class="empty-icon">💌</div>
+            <h4 data-i18n="feedbackEmptyTitle">No Messages Yet</h4>
+            <p data-i18n="feedbackEmptySub">Participant questions and thoughts submitted during the workshop will appear here live.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL 3: OPERATOR NFC TAG WRITER HELPER                         -->
+  <!-- ============================================================== -->
+  <div class="modal-backdrop" id="modalNfcWriterBackdrop" style="display:none;">
+    <div class="modal-dialog modal-nfc-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-badge-icon">🏷️</span>
+          <div>
+            <h3 class="modal-title">Program NFC Souvenir Sticker</h3>
+            <p class="modal-sub">Link the physical plotted poster to its animated online twin!</p>
+          </div>
+        </div>
+        <button type="button" class="btn-modal-close" id="btnCloseNfcModal" aria-label="Close">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Job Banner -->
+        <div class="nfc-job-banner">
+          <div class="nfc-job-info">
+            <span class="nfc-job-id" id="nfcModalJobId">JOB-01</span>
+            <span class="nfc-job-name" id="nfcModalParticipant">Sarah</span>
+            <span class="nfc-job-privacy" id="nfcModalHashBadge" title="Privacy-hashed token for GitHub Pages">#a7f92b4c10</span>
+          </div>
+          <div class="nfc-privacy-notice">
+            🔒 <strong>GitHub Pages Privacy:</strong> Public URLs and files use this 10-char hash so real participant names are never exposed.
+          </div>
+        </div>
+
+        <!-- URL Base Mode Selector (Local Wi-Fi vs GitHub Pages) -->
+        <div class="form-group" style="margin-top: 14px;">
+          <label>NFC Target Destination:</label>
+          <div class="nfc-mode-toggle">
+            <button type="button" class="nfc-mode-chip active" id="btnNfcModeLocal" data-mode="local">
+              🏠 Local Workshop Wi-Fi
+            </button>
+            <button type="button" class="nfc-mode-chip" id="btnNfcModeGithub" data-mode="github">
+              🌐 Public GitHub Pages
+            </button>
+          </div>
+        </div>
+
+        <!-- URL Input & Copy -->
+        <div class="nfc-target-url-box">
+          <input type="text" id="nfcTargetUrlInput" class="form-input nfc-input" readonly>
+          <button type="button" class="btn-copy-url" id="btnCopyNfcTargetUrl">📋 Copy URL</button>
+        </div>
+
+        <!-- QR Code Scannable Preview -->
+        <div class="nfc-qr-section">
+          <div id="nfcQrCodeContainer" class="nfc-qr-box">
+            <!-- QR code rendered here -->
+          </div>
+          <div class="nfc-qr-hint">
+            <strong>Scan to Test:</strong> Point any smartphone camera at this QR code to test the live plotter animation page immediately!
+          </div>
+        </div>
+
+        <!-- NFC Hardware Write Action -->
+        <div class="nfc-actions-group">
+          <button type="button" class="btn-nfc-write" id="btnTriggerWebNfcWrite">
+            <span>📲</span> <strong>Tap NFC Sticker to Device to Write</strong>
+          </button>
+          <p class="nfc-write-status" id="nfcWriteStatusText">
+            ℹ️ Web NFC is supported on Android Chrome. On iPhone / iOS, open the free <strong>NFC Tools</strong> app, tap "Write" > "Add a record" > "URL", paste the URL above, and tap the sticker!
+          </p>
+          <a href="#" target="_blank" class="btn-nfc-open-window" id="btnOpenNfcPageDirect">
+            🎬 Open Machine Animation Webpage In New Tab ↗
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load Scripts -->
+  <script src="js/samples.js"></script>
+  <script src="js/poster_maker.js"></script>
+  <script src="js/algorithms.js"></script>
+  <script src="js/plotter.js"></script>
+  <script src="js/gcode.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

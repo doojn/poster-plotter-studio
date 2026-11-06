@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plotter Studio · Side-by-Side Workshop Test Harness</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #090d16;
+      color: #f8fafc;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top Test Bar */
+    .top-test-bar {
+      height: 52px;
+      background: #0f172a;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    .test-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .test-logo {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .server-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
+    }
+
+    .test-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-quick-test {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 10px rgba(2, 132, 199, 0.4);
+      transition: all 0.15s ease;
+    }
+
+    .btn-quick-test:hover {
+      background: linear-gradient(135deg, #0369a1, #1d4ed8);
+      transform: translateY(-1px);
+    }
+
+    .btn-header-link {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-header-link:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Split Screen Container */
+    .split-container {
+      flex: 1;
+      display: flex;
+      width: 100%;
+      height: calc(100vh - 52px);
+      overflow: hidden;
+    }
+
+    /* Left Pane: Participant Studio */
+    .pane-left {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid rgba(148, 163, 184, 0.2);
+      position: relative;
+    }
+
+    /* Right Pane: Operator Dashboard / NFC Viewer */
+    .pane-right {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #020617;
+      position: relative;
+    }
+
+    .pane-header {
+      height: 40px;
+      background: rgba(15, 23, 42, 0.9);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      flex-shrink: 0;
+    }
+
+    .pane-title {
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #cbd5e1;
+    }
+
+    /* Right Pane Tabs */
+    .right-tabs {
+      display: flex;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 2px;
+      border-radius: 6px;
+      gap: 2px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn.active {
+      background: #0284c7;
+      color: #ffffff;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .pane-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      flex: 1;
+      background: #090d16;
+    }
+
+    /* Resizer Divider */
+    .split-divider {
+      width: 6px;
+      background: rgba(148, 163, 184, 0.12);
+      cursor: col-resize;
+      transition: background 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .split-divider:hover, .split-divider.dragging {
+      background: #0284c7;
+    }
+
+    /* Toast Notification */
+    #testToast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid #0284c7;
+      color: #f8fafc;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+      display: none;
+      z-index: 1000;
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Test Bar -->
+  <div class="top-test-bar">
+    <div class="test-bar-left">
+      <div class="test-logo">
+        <span>🖋️</span>
+        <span>Poster Plotter Workshop · Live Test Suite</span>
+      </div>
+      <div class="server-status-pill">
+        <span class="status-dot"></span>
+        <span id="serverStatusText">Workshop Server Connected</span>
+      </div>
+    </div>
+
+    <div class="test-bar-right">
+      <button type="button" class="btn-quick-test" id="btnAutoSubmitTest">
+        <span>⚡</span> <span>1-Click Test: Submit Demo Poster</span>
+      </button>
+      <a href="index.html" target="_blank" class="btn-header-link">
+        <span>↗</span> <span>Studio Tab</span>
+      </a>
+      <a href="viewer.html" target="_blank" class="btn-header-link">
+        <span>↗</span> <span>NFC Viewer Tab</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Side-by-Side Split View -->
+  <div class="split-container" id="splitContainer">
+
+    <!-- LEFT: Participant Studio -->
+    <div class="pane-left" id="paneLeft">
+      <div class="pane-header">
+        <div class="pane-title">
+          <span>🎨</span> <strong>Participant Studio</strong> (Laptops / Phones / iPads)
+        </div>
+        <div style="font-size: 11px; color: #94a3b8;">
+          Design poster & click "Send to Workshop Plotter"
+        </div>
+      </div>
+      <iframe src="index.html" class="pane-iframe" id="iframeStudio" title="Participant Studio"></iframe>
+    </div>
+
+    <!-- Resizer Divider -->
+    <div class="split-divider" id="splitDivider"></div>
+
+    <!-- RIGHT: Machine Plotter & NFC Companion Viewer -->
+    <div class="pane-right" id="paneRight">
+      <div class="pane-header">
+        <div class="pane-title">
+          <span>🏷️</span> <strong id="rightPaneTitle">NFC Companion & Plotter Animation</strong>
+        </div>
+        <div class="right-tabs">
+          <button type="button" class="tab-btn active" id="tabViewer" data-url="viewer.html">
+            🎬 NFC Animation
+          </button>
+          <button type="button" class="tab-btn" id="tabQueue" data-url="index.html?operator=true">
+            📋 Operator Queue
+          </button>
+        </div>
+      </div>
+      <iframe src="viewer.html" class="pane-iframe" id="iframeViewer" title="NFC Plotter Companion"></iframe>
+    </div>
+
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="testToast"></div>
+
+  <script>
+    (function() {
+      "use strict";
+
+      const iframeStudio = document.getElementById("iframeStudio");
+      const iframeViewer = document.getElementById("iframeViewer");
+      const btnAuto = document.getElementById("btnAutoSubmitTest");
+      const tabViewer = document.getElementById("tabViewer");
+      const tabQueue = document.getElementById("tabQueue");
+      const rightTitle = document.getElementById("rightPaneTitle");
+      const toast = document.getElementById("testToast");
+
+      function showToast(msg, duration = 3000) {
+        toast.innerHTML = msg;
+        toast.style.display = "block";
+        setTimeout(() => { toast.style.display = "none"; }, duration);
+      }
+
+      // Check server connectivity
+      fetch("/api/workshop/info")
+        .then(res => res.json())
+        .then(info => {
+          const statusElem = document.getElementById("serverStatusText");
+          if (statusElem) statusElem.textContent = `Server Live at ${info.localUrl || 'localhost:8080'}`;
+        })
+        .catch(() => {
+          const statusElem = document.getElementById("serverStatusText");
+          if (statusElem) {
+            statusElem.textContent = "Offline / Local Mode";
+            statusElem.parentElement.style.background = "rgba(245, 158, 11, 0.15)";
+            statusElem.parentElement.style.borderColor = "rgba(245, 158, 11, 0.3)";
+            statusElem.parentElement.style.color = "#fbbf24";
+          }
+        });
+
+      // Switch right pane tabs
+      tabViewer.addEventListener("click", () => {
+        tabViewer.classList.add("active");
+        tabQueue.classList.remove("active");
+        rightTitle.textContent = "NFC Companion & Plotter Animation";
+        iframeViewer.src = "viewer.html";
+      });
+
+      tabQueue.addEventListener("click", () => {
+        tabQueue.classList.add("active");
+        tabViewer.classList.remove("active");
+        rightTitle.textContent = "Operator Live Queue & Machine Setup";
+        iframeViewer.src = "index.html?operator=true";
+      });
+
+      // 1-Click Instant Test Submission
+      btnAuto.addEventListener("click", async () => {
+        btnAuto.disabled = true;
+        btnAuto.innerHTML = `<span>⏳</span> <span>Generating Test Poster...</span>`;
+
+        try {
+          // Generate sample geometric paths
+          const cx = 105, cy = 148.5;
+          const layer1 = [];
+          const layer2 = [];
+
+          // Concentric circles
+          for (let r = 20; r <= 80; r += 8) {
+            const pts = [];
+            for (let a = 0; a <= Math.PI * 2; a += 0.1) {
+              pts.push({ x: cx + Math.cos(a) * r, y: cy - 20 + Math.sin(a) * r });
+            }
+            layer1.push(pts);
+          }
+
+          // Flowing waves
+          for (let i = 0; i < 8; i++) {
+            const pts = [];
+            const y0 = cy + 20 + i * 12;
+            for (let x = 30; x <= 180; x += 3) {
+              pts.push({ x, y: y0 + Math.sin(x * 0.08 + i * 0.5) * 8 });
+            }
+            layer2.push(pts);
+          }
+
+          const testPayload = {
+            participantName: "Sarah Al-Bawardi",
+            paperSize: "A4",
+            markerType: "chunky",
+            penCount: 2,
+            penNames: ["Chunky Ultramarine (2.8mm)", "Coral Watercolor (2.8mm)"],
+            penColors: ["#0055ff", "#ff3b5c"],
+            timeFormatted: "3m 24s",
+            penLifts: 2,
+            drawDistMeters: "21.8m",
+            paths: { layer1, layer2 }
+          };
+
+          const res = await fetch("/api/workshop/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(testPayload)
+          });
+
+          const data = await res.json();
+
+          showToast(`🎉 Test Job <strong>[${data.jobId}]</strong> submitted!<br>Hash: <code>#${data.hash}</code><br>Switching right pane to live animation...`, 4000);
+
+          // Switch right pane to animate this exact submitted job
+          tabViewer.click();
+          iframeViewer.src = `viewer.html?id=${data.hash}`;
+
+        } catch (err) {
+          showToast(`❌ Test submission error: ${err.message}`, 4000);
+        } finally {
+          btnAuto.disabled = false;
+          btnAuto.innerHTML = `<span>⚡</span> <span>1-Click Test: Submit Demo Poster</span>`;
+        }
+      });
+
+      // Allow dragging divider
+      const divider = document.getElementById("splitDivider");
+      const leftPane = document.getElementById("paneLeft");
+      let isDragging = false;
+
+      divider.addEventListener("mousedown", () => {
+        isDragging = true;
+        divider.classList.add("dragging");
+        document.body.style.cursor = "col-resize";
+        document.body.style.userSelect = "none";
+      });
+
+      window.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        const totalW = window.innerWidth;
+        const newLeftW = Math.max(300, Math.min(e.clientX, totalW - 300));
+        const pct = (newLeftW / totalW) * 100;
+        leftPane.style.flex = `0 0 ${pct}%`;
+      });
+
+      window.addEventListener("mouseup", () => {
+        if (isDragging) {
+          isDragging = false;
+          divider.classList.remove("dragging");
+          document.body.style.cursor = "default";
+          document.body.style.userSelect = "auto";
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>
